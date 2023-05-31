@@ -55,8 +55,9 @@ type FreeButton struct {
 	TemplateStyle
 	Field
 	TagOpts
-	Value string
-	Title string
+	FullAction string
+	Value      string
+	Title      string
 }
 
 func (FreeButton) DefaultTemplate() string { return "control-button" }

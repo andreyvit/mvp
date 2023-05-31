@@ -44,7 +44,8 @@ type Settings struct {
 	MaxRateLimitRequestDelay jsonext.Duration
 	AppBehaviors
 
-	DataDir   string
+	DataDir string
+
 	VerboseDB bool
 
 	Postmark                     postmark.Credentials

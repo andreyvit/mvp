@@ -2,10 +2,15 @@ package mvplive
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
 	"github.com/andreyvit/mvp/flake"
+)
+
+const (
+	debugLog = false
 )
 
 type QueueOptions struct {
@@ -51,9 +56,18 @@ func (q *Queue) Await(ctx context.Context, ch Channel, afterID flake.ID) []*Msg 
 
 	defer translateContextDoneToCondBroadcast(ctx, q.cond)
 
+	if debugLog {
+		log.Printf("mvplive: channel %v: Await(after=%v): start", ch, afterID)
+	}
 	for {
 		msgs := q.messagesAfterWithLockHeld(ch, afterID, q.cutoffIDByTime(time.Now()))
+		if debugLog {
+			log.Printf("mvplive: channel %v: Await(after=%v): msgs=%d", ch, afterID, len(msgs))
+		}
 		if msgs != nil || ctx.Err() != nil {
+			if debugLog {
+				log.Printf("mvplive: channel %v: Await(after=%v): end", ch, afterID)
+			}
 			return msgs
 		}
 		q.cond.Wait()
@@ -94,8 +108,11 @@ func (q *Queue) MessagesAfter(ch Channel, afterID flake.ID, now time.Time) []*Ms
 func (q *Queue) messagesAfterWithLockHeld(ch Channel, afterID, cutoffID flake.ID) []*Msg {
 	msgs := q.msgs[ch]
 
-	lower := q.determineLowerBound(msgs, cutoffID, 1)
+	lower := q.determineLowerBound(msgs, cutoffID, 0)
 	if lower > 0 {
+		if debugLog {
+			log.Printf("mvplive: channel %v: trimming %d while retriving", ch, lower)
+		}
 		copy(msgs, msgs[lower:])
 		msgs = msgs[:len(msgs)-lower]
 		q.msgs[ch] = msgs
@@ -115,6 +132,9 @@ func (q *Queue) pushWithLockHeld(ch Channel, msg *Msg, cutoffID flake.ID) {
 	msgs := q.msgs[ch]
 	lower := q.determineLowerBound(msgs, cutoffID, 1)
 	if lower > 0 {
+		if debugLog {
+			log.Printf("mvplive: channel %v: trimming %d while pushing", ch, lower)
+		}
 		copy(msgs, msgs[lower:])
 		msgs = msgs[:len(msgs)-lower]
 	}
@@ -128,7 +148,7 @@ func (q *Queue) determineLowerBound(msgs []*Msg, cutoffID flake.ID, aboutToBeAdd
 	if q.limit > 0 && (n+aboutToBeAdded) > q.limit {
 		lower = (n + aboutToBeAdded) - q.limit
 	}
-	for lower < n && msgs[lower].ID > cutoffID {
+	for lower < n && msgs[lower].ID < cutoffID {
 		lower++
 	}
 	return lower
