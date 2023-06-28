@@ -3,6 +3,7 @@ package mvp
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 )
 
 const (
@@ -63,6 +64,22 @@ func adaptMiddleware(f any) func(rc *RC) (any, error) {
 			return nil, nil
 		}
 	default:
-		panic(fmt.Errorf("unknown middleware signature or type %T", f))
+		fv := reflect.ValueOf(f)
+		if fv.Kind() != reflect.Func {
+			panic(fmt.Errorf("unsupported middleware type %T", f))
+		}
+		ft := fv.Type()
+		if ft.NumIn() == 1 && ft.NumOut() == 2 && ft.Out(1) == errorType {
+			if rcf := BaseRC.FacetByPtrType(ft.In(0)); rcf != nil {
+				return func(rc *RC) (any, error) {
+					out := fv.Call([]reflect.Value{
+						reflect.ValueOf(rcf.AnyFrom(rc)),
+					})
+					return out[0].Interface(), errFromAny(out[1].Interface())
+				}
+			}
+		}
+
+		panic(fmt.Errorf("unknown middleware signature %T", f))
 	}
 }

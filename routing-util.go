@@ -22,3 +22,10 @@ var (
 	errorType          reflect.Type = reflect.TypeOf((*error)(nil)).Elem()
 	pathParamsRe                    = regexp.MustCompile(`:(\w+)`)
 )
+
+func errFromAny(v any) error {
+	if v == nil {
+		return nil
+	}
+	return v.(error)
+}

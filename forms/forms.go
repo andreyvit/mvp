@@ -14,6 +14,13 @@ type Child interface {
 
 type Children []Child
 
+func (cc *Children) Add(c Child) {
+	if c == nil {
+		return
+	}
+	*cc = append(*cc, c)
+}
+
 func (cc Children) Finalize(state *State) {
 }
 
@@ -48,6 +55,7 @@ type Processor interface {
 }
 
 type FormData struct {
+	Action string
 	Values url.Values
 	Files  map[string][]*multipart.FileHeader
 }
@@ -70,10 +78,12 @@ type Form struct {
 	Multipart bool
 	URL       string
 	Group
+
+	Action string
 }
 
 func (form *Form) Render(r *Renderer) template.HTML {
-	form.finalize()
+	form.finalize(nil)
 	return r.Render(&form.Group)
 }
 
@@ -88,7 +98,15 @@ func (form *Form) ProcessRequest(r *http.Request) bool {
 }
 
 func (form *Form) Process(data *FormData) bool {
-	form.finalize()
+	if data.Action == "" {
+		data.Action = data.Values.Get("action")
+		if data.Action == "" {
+			data.Action = "submit"
+		}
+	}
+	form.Action = data.Action
+
+	form.finalize(data)
 	for name, field := range form.fields {
 		field.RawFormValues = data.Values[name]
 		field.RawFormValue = ""
@@ -106,13 +124,14 @@ func (form *Form) Process(data *FormData) bool {
 	return !form.Invalid()
 }
 
-func (form *Form) finalize() {
+func (form *Form) finalize(data *FormData) {
 	if form.finalized {
 		return
 	}
 	form.finalized = true
 
 	state := State{
+		Data:          data,
 		path:          make([]string, 0, 10),
 		fields:        make(map[string]*Field, 100),
 		classes:       make([]map[string]string, 0, 10),
@@ -209,8 +228,9 @@ func (item *Item) RenderInto(buf *strings.Builder, r *Renderer) {
 type Wrapper struct {
 	WrapperTag TagOpts
 	Template   string
-	Child      Child
-	InnerHTML  template.HTML
+	TemplateStyle
+	Child     Child
+	InnerHTML template.HTML
 }
 
 func (wrapper *Wrapper) Finalize(state *State) {

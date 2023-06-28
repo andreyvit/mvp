@@ -281,12 +281,20 @@ func HTMLify(v any) template.HTML {
 	case nil:
 		return ""
 	case string:
-		return template.HTML(template.HTMLEscapeString(v))
+		return HTMLifyString(v)
 	case template.HTML:
 		return v
 	default:
-		return template.HTML(template.HTMLEscapeString(fmt.Sprint(v)))
+		return HTMLifyString(fmt.Sprint(v))
 	}
+}
+
+func HTMLifyString(text string) template.HTML {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		lines[i] = template.HTMLEscapeString(line)
+	}
+	return template.HTML(strings.Join(lines, "<br>\n"))
 }
 
 func sendSignal(c chan<- struct{}) {

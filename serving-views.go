@@ -87,7 +87,7 @@ func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
 
 func (app *App) freshTemplates(lc flogger.Context) *template.Template {
 	if app.Settings.ServeAssetsFromDisk {
-		flogger.Log(lc, "reloading templates from disk")
+		// flogger.Log(lc, "reloading templates from disk")
 		t, err := app.loadTemplates()
 		if err != nil {
 			panic(fmt.Errorf("reloading templates: %v", err))
@@ -113,8 +113,8 @@ func initViews(app *App, opt *AppOptions) {
 		app.staticFS = os.DirFS(filepath.Join(ge.LocalDevAppRoot, ge.StaticSubdir))
 		app.viewsFS = os.DirFS(filepath.Join(ge.LocalDevAppRoot, ge.ViewsSubdir))
 	} else {
-		app.staticFS = ge.EmbeddedStaticFS
-		app.viewsFS = ge.EmbeddedViewsFS
+		app.staticFS = must(fs.Sub(ge.EmbeddedStaticFS, ge.StaticSubdir))
+		app.viewsFS = must(fs.Sub(ge.EmbeddedViewsFS, ge.ViewsSubdir))
 	}
 
 	var err error
@@ -141,19 +141,21 @@ func (app *App) loadTemplates() (*template.Template, error) {
 
 	var templs []*templDef
 
-	err := fs.WalkDir(app.viewsFS, ".", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(app.viewsFS, ".", func(fullPath string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("%s: %w", path, err)
+			return fmt.Errorf("%s: %w", fullPath, err)
 		}
-		if !strings.HasSuffix(path, templateSuffix) {
+		relPath := fullPath //strings.TrimPrefix(fullPath, app.Configuration.ViewsSubdir+"/")
+		log.Printf("loadTemplates sees: %v", relPath)
+		if !strings.HasSuffix(relPath, templateSuffix) {
 			return nil
 		}
-		name := strings.TrimSuffix(path, templateSuffix)
+		name := strings.TrimSuffix(relPath, templateSuffix)
 		baseName := strings.TrimSuffix(d.Name(), templateSuffix)
-		code := string(must(fs.ReadFile(app.viewsFS, path)))
+		code := string(must(fs.ReadFile(app.viewsFS, fullPath)))
 
 		var kind templKind
-		if strings.HasPrefix(path, "layouts/") {
+		if strings.HasPrefix(relPath, "layouts/") {
 			kind = layoutTempl
 		} else if strings.HasPrefix(baseName, "c-") {
 			kind = componentTempl
@@ -166,7 +168,7 @@ func (app *App) loadTemplates() (*template.Template, error) {
 
 		templs = append(templs, &templDef{
 			name: name,
-			path: path,
+			path: fullPath,
 			code: code,
 			kind: kind,
 			tmpl: root.New(name),

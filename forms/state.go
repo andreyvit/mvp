@@ -46,6 +46,8 @@ func (ts *TemplateStyle) TemplateStylePtr() *TemplateStyle {
 }
 
 type State struct {
+	Data *FormData
+
 	path        []string
 	errSites    []ErrorSite
 	fields      map[string]*Field
@@ -165,10 +167,11 @@ func (st *State) AddField(field *Field) {
 }
 
 func (st *State) AssignIdentity(ident *Identity) {
-	full := strings.Join(st.path, "_")
 	if ident.ID == "" {
-		ident.ID = full
-		ident.FullName = full
+		ident.ID = strings.Join(st.path, "_")
+	}
+	if ident.FullName == "" {
+		ident.FullName = JoinNames(st.path...)
 	}
 }
 

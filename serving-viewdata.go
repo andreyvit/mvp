@@ -15,6 +15,8 @@ type ViewData struct {
 	Data         any
 	SemanticPath string
 
+	ContentType string
+
 	*SiteData
 	Route  *Route
 	App    *App

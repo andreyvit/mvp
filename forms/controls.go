@@ -178,27 +178,42 @@ func (c *InputFloat64) Process(*FormData) {
 	c.Binding.SetString(c.RawFormValue, parseFloat64)
 }
 
+type SpecialValue[T comparable] struct {
+	ModelValue    T
+	PostbackValue string
+}
+
 type Button struct {
 	Template
 	TemplateStyle
-	Field
+	Identity
 	TagOpts
-	Value     string
-	Activated bool
-	Title     string
+	Action     string
+	FullAction string
+	Activated  bool
+	Title      string
 }
 
 func (Button) DefaultTemplate() string { return "control-button" }
 
-func (c *Button) Finalize(state *State) {}
+func (c *Button) Finalize(state *State) {
+	if c.Action == "" {
+		c.Action = "submit"
+	}
+	state.PushName(c.Action)
+	state.AssignIdentity(&c.Identity)
+	if c.FullAction == "" {
+		if c.Action == "submit" {
+			c.FullAction = "submit"
+		} else {
+			c.FullAction = c.FullName
+		}
+	}
+}
 
 func (c *Button) EnumBindings(f func(AnyBinding)) {
 }
 
-func (c *Button) Process(*FormData) {
-	if c.Value != "" {
-		c.Activated = (c.RawFormValue == c.Value)
-	} else {
-		c.Activated = c.RawFormValuePresent
-	}
+func (c *Button) Process(fd *FormData) {
+	c.Activated = (fd.Action == c.FullAction)
 }

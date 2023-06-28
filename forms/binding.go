@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+
+	"golang.org/x/exp/slices"
 )
 
 type AnyBinding interface {
@@ -109,6 +111,142 @@ func Convert[T, S any](b *Binding[S], stringer func(S) T, convert func(T) (S, er
 				return err
 			}
 			b.Set(value)
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
+func IntAsString(b *Binding[int], opts ...any) *Binding[string] {
+	var specials []SpecialValue[int]
+	for _, opt := range opts {
+		switch opt := opt.(type) {
+		case []SpecialValue[int]:
+			specials = opt
+		case SpecialValue[int]:
+			specials = append(specials, opt)
+		default:
+			panic(fmt.Errorf("invalid option %T %v", opt, opt))
+		}
+	}
+	return Convert(b, func(v int) string {
+		for _, sp := range specials {
+			if sp.ModelValue == v {
+				return sp.PostbackValue
+			}
+		}
+		return strconv.FormatInt(int64(v), 10)
+	}, func(str string) (int, error) {
+		for _, sp := range specials {
+			if sp.PostbackValue == str {
+				return sp.ModelValue, nil
+			}
+		}
+		v, err := strconv.ParseInt(str, 10, 0)
+		if err != nil {
+			return 0, fmt.Errorf("invalid number")
+		}
+		return int(v), nil
+	})
+}
+
+func Int64AsString(b *Binding[int64], opts ...any) *Binding[string] {
+	var specials []SpecialValue[int64]
+	for _, opt := range opts {
+		switch opt := opt.(type) {
+		case []SpecialValue[int64]:
+			specials = opt
+		case SpecialValue[int64]:
+			specials = append(specials, opt)
+		default:
+			panic(fmt.Errorf("invalid option %T %v", opt, opt))
+		}
+	}
+	return Convert(b, func(v int64) string {
+		for _, sp := range specials {
+			if sp.ModelValue == v {
+				return sp.PostbackValue
+			}
+		}
+		return strconv.FormatInt(int64(v), 10)
+	}, func(str string) (int64, error) {
+		for _, sp := range specials {
+			if sp.PostbackValue == str {
+				return sp.ModelValue, nil
+			}
+		}
+		v, err := strconv.ParseInt(str, 10, 0)
+		if err != nil {
+			return 0, fmt.Errorf("invalid number")
+		}
+		return int64(v), nil
+	})
+}
+
+func BindSliceContainsEl[T comparable](b *Binding[[]T], el T) *Binding[bool] {
+	return &Binding[bool]{
+		Value: slices.Contains(b.Value, el),
+		Setter: func(source bool) error {
+			i := slices.Index(b.Value, el)
+			if i < 0 {
+				if source {
+					items := slices.Clone(b.Value)
+					items = append(items, el)
+					b.Set(items)
+				}
+			} else {
+				if !source {
+					items := slices.Clone(b.Value)
+					items = slices.Delete(items, i, i+1)
+					b.Set(items)
+				}
+			}
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
+func BindSliceEmptyOrSingle[T comparable](b *Binding[[]T], emptyValue T) *Binding[T] {
+	var value T
+	if len(b.Value) == 0 {
+		value = emptyValue
+	} else {
+		value = b.Value[0]
+	}
+
+	return &Binding[T]{
+		Value: value,
+		Setter: func(source T) error {
+			if source == emptyValue {
+				b.Set(nil)
+			} else {
+				b.Set([]T{source})
+			}
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
+func BindMapKey[T any, K comparable](m map[K]T, key K) *Binding[T] {
+	return &Binding[T]{
+		Value: m[key],
+		Setter: func(value T) error {
+			m[key] = value
+			return nil
+		},
+	}
+}
+
+func BindNot(b *Binding[bool]) *Binding[bool] {
+	return &Binding[bool]{
+		Value: !b.Value,
+		Setter: func(source bool) error {
+			b.Set(!source)
 			return nil
 		},
 		ErrSite: b.ErrSite,

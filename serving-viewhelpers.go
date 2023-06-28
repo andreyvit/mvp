@@ -1,6 +1,8 @@
 package mvp
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"regexp"
@@ -8,26 +10,18 @@ import (
 	"unicode/utf8"
 
 	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/mvphelpers"
 )
 
-func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
-	m["c_link"] = app.renderLink
-	m["c_icon"] = app.renderIcon
-	m["attr"] = Attr
-	m["attrs"] = func(attrs any) template.HTMLAttr {
-		switch attrs := attrs.(type) {
-		case map[string]string:
-			return Attrs(attrs)
-		case map[string]any:
-			return AttrsAny(attrs)
-		default:
-			panic(fmt.Errorf("attrs: invalid value %T %v", attrs, attrs))
-		}
+func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
+	for k, v := range mvphelpers.FuncMap() {
+		m[k] = v
 	}
+	m["attr"] = Attr
+	m["attrs"] = AttrsSwitch
 	m["error"] = func(text string) template.HTML {
 		panic(fmt.Errorf("%s", text))
 	}
-	m["eval"] = app.EvalTemplate
 	m["iif"] = func(cond any, trueVal any, falseVal any) any {
 		if IsFalsy(cond) {
 			return falseVal
@@ -35,19 +29,9 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 			return trueVal
 		}
 	}
-	m["url_for"] = func(d *RenderData, name string, extras ...any) template.URL {
-		defaults := d.DefaultPathParams()
-		if len(defaults) > 0 {
-			newExtras := make([]any, 0, len(extras)+1)
-			newExtras = append(newExtras, defaults)
-			newExtras = append(newExtras, extras...)
-			extras = newExtras
-		}
-		return template.URL(d.App.URL(name, extras...))
-	}
 	m["repeat"] = func(n int) []int {
 		r := make([]int, 0, n)
-		for i := 0; i < n; i++ {
+		for i := 1; i <= n; i++ {
 			r = append(r, i)
 		}
 		return r
@@ -81,8 +65,48 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 		return nil
 	}
 	m["classes"] = JoinClasses
+	m["add"] = func(a, b int) int {
+		return a + b
+	}
+	m["addone"] = func(v int) int {
+		return v + 1
+	}
+	m["defined"] = func(cond any) bool {
+		return cond != nil
+	}
+	m["json"] = func(v any) template.JS {
+		return template.JS(string(must(json.Marshal(v))))
+	}
+	m["jsonpp"] = func(v any) template.JS {
+		return template.JS(string(must(json.MarshalIndent(v, "", "    "))))
+	}
+	m["indentrawjson"] = func(v json.RawMessage) template.JS {
+		if len(v) == 0 {
+			return ""
+		}
+		var buf bytes.Buffer
+		ensure(json.Indent(&buf, []byte(v), "", "    "))
+		return template.JS(buf.String())
+	}
 	m["dump"] = func(v any) string {
 		return fmt.Sprintf("%T %v", v, v)
+	}
+}
+
+func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
+	RegisterBuiltinUtilityViewHelpers(m)
+	m["c_link"] = app.renderLink
+	m["c_icon"] = app.renderIcon
+	m["eval"] = app.EvalTemplate
+	m["url_for"] = func(d *RenderData, name string, extras ...any) template.URL {
+		defaults := d.DefaultPathParams()
+		if len(defaults) > 0 {
+			newExtras := make([]any, 0, len(extras)+1)
+			newExtras = append(newExtras, defaults)
+			newExtras = append(newExtras, extras...)
+			extras = newExtras
+		}
+		return template.URL(d.App.URL(name, extras...))
 	}
 }
 
@@ -239,6 +263,17 @@ func Attr(name string, value any) template.HTMLAttr {
 		return template.HTMLAttr(" " + name)
 	}
 	return template.HTMLAttr(" " + name + "=\"" + template.HTMLEscapeString(fmt.Sprint(value)) + "\"")
+}
+
+func AttrsSwitch(attrs any) template.HTMLAttr {
+	switch attrs := attrs.(type) {
+	case map[string]string:
+		return Attrs(attrs)
+	case map[string]any:
+		return AttrsAny(attrs)
+	default:
+		panic(fmt.Errorf("attrs: invalid value %T %v", attrs, attrs))
+	}
 }
 
 func Attrs(attrs map[string]string) template.HTMLAttr {
