@@ -109,6 +109,7 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 	RegisterBuiltinUtilityViewHelpers(m)
 	m["c_link"] = app.renderLink
 	m["c_icon"] = app.renderIcon
+	m["c_func_button"] = app.renderFuncButton
 	m["eval"] = app.EvalTemplate
 	m["url_for"] = func(d *RenderData, name string, extras ...any) template.URL {
 		defaults := d.DefaultPathParams()
@@ -209,6 +210,61 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	} else {
 		return template.HTML(fmt.Sprintf(`<a href="%s"%s>%s%s</a>`, href, extraArgs.String(), iconStr, body))
 	}
+}
+
+func (app *App) renderFuncButton(data *RenderData) template.HTML {
+	funcName, _ := data.PopString("func")
+	route := app.routesByName[funcName]
+	if route == nil {
+		panic(fmt.Errorf("unknown func %q", funcName))
+	}
+
+	params := make(map[string]any)
+	// log.Printf("<c-func-button>: %s: params = %v", funcName, route.BodyParamNames())
+	for _, name := range route.BodyParamNames() {
+		v, ok := data.PopValue(name)
+		if ok {
+			params[name] = v
+		}
+	}
+
+	formID, _ := data.PopString("form")
+	if formID == "" {
+		formID = app.Configuration.FallbackFormID
+	}
+	classAttr, _ := data.PopString("class")
+
+	body, _ := data.PopValue("body")
+
+	var buf strings.Builder
+	buf.WriteString(`<button type="submit"`)
+	if formID != "outer" && formID != "" {
+		mvphelpers.AppendAttr(&buf, "form", formID)
+	}
+	mvphelpers.AppendAttr(&buf, "formmethod", route.Method())
+	mvphelpers.AppendAttr(&buf, "formaction", route.Path())
+	if classAttr != "" {
+		mvphelpers.AppendAttr(&buf, "class", classAttr)
+	}
+
+	for k, v := range data.Args {
+		k = strings.ReplaceAll(k, "_", "-")
+		if isPassThruArg(k) {
+			mvphelpers.AppendAttrAny(&buf, k, v)
+		} else {
+			panic(fmt.Errorf("<c-func-button>: invalid param %s", k))
+		}
+	}
+
+	if len(params) > 0 {
+		bodyBytes := must(json.Marshal(params))
+		mvphelpers.AppendAttr(&buf, "name", "_body")
+		mvphelpers.AppendAttr(&buf, "value", string(bodyBytes))
+	}
+	buf.WriteString(">")
+	buf.WriteString(string(mvphelpers.FuzzyHTMLAttrValue(body)))
+	buf.WriteString("</button>")
+	return template.HTML(buf.String())
 }
 
 func (app *App) renderIcon(data *RenderData) template.HTML {

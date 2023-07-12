@@ -8,16 +8,17 @@ import (
 )
 
 type Route struct {
-	desc          string
-	routeName     string
-	method        string
-	path          string
-	funcVal       reflect.Value
-	rcFacet       expandable.Any[RC]
-	inType        reflect.Type
-	idempotent    bool
-	storeAffinity mvpm.StoreAffinity
-	pathParams    []string
+	desc           string
+	routeName      string
+	method         string
+	path           string
+	bodyParamNames []string
+	funcVal        reflect.Value
+	rcFacet        expandable.Any[RC]
+	inType         reflect.Type
+	idempotent     bool
+	storeAffinity  mvpm.StoreAffinity
+	pathParams     []string
 	routingContext
 }
 
@@ -50,6 +51,10 @@ func (r *Route) IsIdempotent() bool {
 
 func (r *Route) PathParams() []string {
 	return r.pathParams
+}
+
+func (r *Route) BodyParamNames() []string {
+	return r.bodyParamNames
 }
 
 func (route *Route) Mutator() {

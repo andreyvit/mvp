@@ -99,6 +99,13 @@ func (d *RenderData) Value(name string) (any, bool) {
 	v, found := d.Args[name]
 	return v, found
 }
+func (d *RenderData) PopValue(name string) (any, bool) {
+	v, found := d.Value(name)
+	if found {
+		delete(d.Args, name)
+	}
+	return v, found
+}
 
 func (d *RenderData) String(name string) (string, bool) {
 	v, found := d.Value(name)
