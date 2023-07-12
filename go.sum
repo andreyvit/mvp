@@ -1,7 +1,11 @@
 github.com/andreyvit/edb v0.1.3 h1:W2MFPZxe5Jt4h48XAdN2jybJ3eGFtFynyjodzYaX8qU=
 github.com/andreyvit/edb v0.1.3/go.mod h1:HCwScySFzmEEzbcRn/6HMl/YZl6K8pXdrj8uHvD14Vg=
+github.com/andreyvit/edb v0.1.5 h1:fAoqcL9v+xYjaypkyF5cQ9695fEW+Nq4eKeupt+Lia4=
+github.com/andreyvit/edb v0.1.5/go.mod h1:HCwScySFzmEEzbcRn/6HMl/YZl6K8pXdrj8uHvD14Vg=
 github.com/andreyvit/httpform v0.1.5 h1:n1CD6tjNONSDRnZCooiZ/OgDgOZUhPuptvdt/5bLcjg=
 github.com/andreyvit/httpform v0.1.5/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
+github.com/andreyvit/httpform v0.1.8 h1:1jUTIBAct5eEABl04HTlntx0k0I0dTO6IPIo/p80lmw=
+github.com/andreyvit/httpform v0.1.8/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5 h1:0ZOOtzyfCmLo7uC4L5T0RQz1KfnO1CgloBiyVzpYP7Y=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5/go.mod h1:EB1+OF1waj9wGowDE1XqHLmET8vq9dsEc/exB3gKlgI=
 github.com/andreyvit/jsonfix v1.0.0 h1:S5BFMo08D6Uh3mnxtR8/Mtu+uzREQqgVplpZUI1wuXs=

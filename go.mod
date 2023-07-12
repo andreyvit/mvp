@@ -3,8 +3,8 @@ module github.com/andreyvit/mvp
 go 1.20
 
 require (
-	github.com/andreyvit/edb v0.1.3
-	github.com/andreyvit/httpform v0.1.5
+	github.com/andreyvit/edb v0.1.5
+	github.com/andreyvit/httpform v0.1.8
 	github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5
 	github.com/andreyvit/jsonfix v1.0.0
 	github.com/andreyvit/minicomponents v0.3.2
