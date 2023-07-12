@@ -155,7 +155,7 @@ func (q *Queue) determineLowerBound(msgs []*Msg, cutoffID flake.ID, aboutToBeAdd
 }
 
 func (q *Queue) cutoffIDByID(id flake.ID) flake.ID {
-	ms := id.Milliseconds()
+	ms := id.Millis()
 	delta := uint64(q.ttl.Milliseconds())
 	if ms > delta {
 		return flake.Build(ms-delta, 0, 0)

@@ -10,8 +10,10 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -226,6 +228,14 @@ func JoinClasses(items ...any) string {
 	return JoinClassList(classes)
 }
 
+func JoinClassStrings(items ...string) string {
+	var classes []string
+	for _, item := range items {
+		classes = AddClasses(classes, item)
+	}
+	return JoinClassList(classes)
+}
+
 func JoinClassList(classes []string) string {
 	return strings.Join(classes, " ")
 }
@@ -299,4 +309,78 @@ func HTMLifyString(text string) template.HTML {
 
 func sendSignal(c chan<- struct{}) {
 	c <- struct{}{}
+}
+
+func ensureSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		return s
+	} else {
+		return s + suffix
+	}
+}
+
+func JoinInlineCSS(a, b string) string {
+	a = strings.TrimSpace(a)
+	b = strings.TrimSpace(b)
+	if a == "" {
+		return b
+	} else if b == "" {
+		return a
+	} else if strings.HasSuffix(a, ";") {
+		return a + " " + b
+	} else {
+		return a + "; " + b
+	}
+}
+
+var (
+	mobileUARe  = regexp.MustCompile(`(?i)(iPhone|Android)`)
+	androidUARe = regexp.MustCompile(`(?i)Android`)
+)
+
+func IsMobileUA(ua string) bool {
+	return mobileUARe.MatchString(ua)
+}
+func IsAndroidUA(ua string) bool {
+	return androidUARe.MatchString(ua)
+}
+func IsMobileRequest(r *http.Request) bool {
+	return IsMobileUA(r.Header.Get("User-Agent"))
+}
+func IsAndroidRequest(r *http.Request) bool {
+	return IsAndroidUA(r.Header.Get("User-Agent"))
+}
+func SMSLinkURI(phone, body string, ua string) string {
+	qs := PlusToPercent20(url.Values{"body": {body}}.Encode())
+	if IsAndroidUA(ua) {
+		return "sms://" + phone + "/?" + qs
+	} else {
+		return "sms://" + phone + "/&" + qs
+	}
+}
+func TweetIntentURL(body string, linkURL string) string {
+	q := url.Values{
+		"text": {body},
+	}
+	if linkURL != "" {
+		q["url"] = []string{linkURL}
+	}
+	return "https://twitter.com/intent/tweet?" + q.Encode()
+}
+func WhatsappSendURL(body string, ua string) string {
+	if IsMobileUA(ua) {
+		q := url.Values{
+			"text": {body},
+		}
+		return "whatsapp://send/?" + q.Encode()
+	} else {
+		q := url.Values{
+			"text": {body},
+		}
+		return "https://api.whatsapp.com/send/?" + q.Encode()
+	}
+}
+
+func PlusToPercent20(s string) string {
+	return strings.ReplaceAll(s, "+", "%20")
 }

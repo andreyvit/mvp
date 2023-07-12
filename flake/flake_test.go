@@ -20,10 +20,13 @@ func TestGen(t *testing.T) {
 	try(t, g, prsnt, 0x1397f20801420001)
 }
 
-func try(t *testing.T, g *Gen, at time.Time, e ID) {
+func try(t *testing.T, g *Gen, tm time.Time, e ID) {
 	t.Helper()
-	a := g.NewAt(at)
+	a := g.NewAt(tm)
 	if a != e {
-		t.Errorf("NewAt(%v) = %v, wanted %v  (ms at that time = %X)", at, a, e, MillisecondsFromTime(at))
+		t.Errorf("NewAt(%v) = %v, wanted %v  (ms at that time = %X)", tm, a, e, MillisecondsFromTime(tm))
+	}
+	if at := a.Time(); at.Unix() != tm.Unix() {
+		t.Errorf("%v.Time() = %v, wanted %v", a, at, tm)
 	}
 }

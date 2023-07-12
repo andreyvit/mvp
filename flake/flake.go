@@ -18,9 +18,17 @@ var ErrInvalid = errors.New("invalid flake")
 
 const zeros = "0"
 
-var zerob = []byte(zeros)
+type (
+	// ID has 40 time bits (in ms), 8 node bits, 16 sequence bits.
+	ID uint64
 
-type ID uint64
+	IDish interface {
+		FlakeID() ID
+	}
+
+	// Millis is an alias for uint64 for code clarity.
+	Millis = uint64
+)
 
 func (id ID) IsZero() bool {
 	return id == 0
@@ -85,7 +93,7 @@ func Parse(s string) (ID, error) {
 }
 
 func ParseBytes(s []byte) (ID, error) {
-	if bytes.Equal(s, zerob) {
+	if len(s) == 0 || (len(s) == 1 && s[0] == '0') {
 		return 0, nil
 	}
 	if len(s) != 16 {
@@ -173,7 +181,7 @@ const (
 )
 
 func MinAt(tm time.Time) ID {
-	return Build(MillisecondsFromTime(tm), 0, 0)
+	return Build(MillisAt(tm), 0, 0)
 }
 
 func Build(ms uint64, node uint64, seq uint64) ID {
@@ -186,8 +194,8 @@ func Build(ms uint64, node uint64, seq uint64) ID {
 	return ID((ms << timeShift) | (node << nodeShift) | seq)
 }
 
-func (id ID) Milliseconds() uint64 {
-	return uint64(id >> nodeShift)
+func (id ID) Millis() Millis {
+	return uint64(id >> timeShift)
 }
 
 func (id ID) Node() uint64 {
@@ -199,9 +207,7 @@ func (id ID) Seq() uint64 {
 }
 
 func (id ID) Time() time.Time {
-	u := id.Milliseconds() + EpochMs
-	s, ms := u/1000, u%1000
-	return time.Unix(int64(s), int64(ms*uint64(time.Millisecond)))
+	return TimeAt(id.Millis())
 }
 
 func (id ID) MsFirst() ID {
@@ -212,19 +218,31 @@ func (id ID) MsLast() ID {
 	return id | ID(nodeAndSeqMask)
 }
 
-func MillisecondsFromTime(tm time.Time) uint64 {
+func MillisAt(tm time.Time) Millis {
+	if tm.IsZero() {
+		return 0
+	}
 	v := int64(tm.UnixMilli()) - int64(EpochMs)
 	if v < 0 || uint64(v) > timeMask {
 		panic(fmt.Errorf("time %v is unrepresentable as bubble milliseconds", tm))
 	}
 	return uint64(v)
 }
+func TimeAt(ms Millis) time.Time {
+	u := ms + EpochMs
+	s, extraMs := u/1000, u%1000
+	return time.Unix(int64(s), int64(extraMs*uint64(time.Millisecond))).UTC()
+}
 
 func FirstAt(tm time.Time) ID {
-	return Build(MillisecondsFromTime(tm), 0, 0)
+	return Build(MillisAt(tm), 0, 0)
 }
 
 type Memento uint64
+
+type Newer interface {
+	NewID() ID
+}
 
 type Gen struct {
 	node uint64
@@ -251,7 +269,7 @@ func (g *Gen) New() ID {
 }
 
 func (g *Gen) NewAt(now time.Time) ID {
-	ms := MillisecondsFromTime(now)
+	ms := MillisAt(now)
 
 	g.lock.Lock()
 	defer g.lock.Unlock()

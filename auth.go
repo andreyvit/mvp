@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/andreyvit/mvp/flake"
-	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/httperrors"
 	"github.com/andreyvit/mvp/jwt"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
@@ -25,7 +24,7 @@ type Auth struct {
 // }
 
 func (app *App) DecodeAuthToken(rc *RC, token string) error {
-	flogger.Log(rc, "DecodeAuthToken: %q", token)
+	// flogger.Log(rc, "DecodeAuthToken: %q", token)
 	runHooksFwd2(app.Hooks.resetAuth, app, rc)
 
 	c := TokenDecoding{
