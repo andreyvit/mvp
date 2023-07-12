@@ -27,6 +27,7 @@ type Configuration struct {
 	StaticSubdir    string
 	ViewsSubdir     string
 	LocalDevAppRoot string
+	FallbackFormID  string
 
 	Modules []*Module
 

@@ -167,7 +167,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 		}
 
 		href = app.URL(routeName, params)
-		isActive = (data.Route.routeName == routeName)
+		isActive = (data.Route != nil && data.Route.routeName == routeName)
 		looksActive = isActive
 		if sempathAttr != "" {
 			looksActive = data.IsActive(sempathAttr)

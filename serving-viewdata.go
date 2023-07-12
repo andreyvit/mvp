@@ -11,6 +11,7 @@ import (
 type ViewData struct {
 	View         string
 	Title        string
+	TitleVisible bool
 	Layout       string
 	Data         any
 	SemanticPath string

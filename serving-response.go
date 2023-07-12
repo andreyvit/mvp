@@ -15,6 +15,7 @@ type Redirect struct {
 	Path       string
 	StatusCode int
 	Values     url.Values
+	RouteName  string
 }
 
 // SameMethod uses 307 Temporary Redirect for this redirect.
