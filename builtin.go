@@ -5,6 +5,7 @@ import (
 
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/mvp/mvpjobs"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )
 
 var (
@@ -39,4 +40,7 @@ var (
 	jobsByKindName         = edb.AddIndex[mvpjobs.KindName]("by_kind_name_v2").Unique()
 	pendingJobsByRunTime   = edb.AddIndex[time.Time]("pending_by_run_time")
 	runningJobsByStartTime = edb.AddIndex[time.Time]("running_by_start_time")
+
+	migrationsTable = edb.AddTable(builtinDBSchema, "migrations", 1, func(row *mvpm.MigrationRecord, ib *edb.IndexBuilder) {
+	}, nil, []*edb.Index{})
 )

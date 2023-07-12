@@ -126,8 +126,11 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 
 	{
 		rc := NewRC(ctx, app, "init")
+		allMigrations := collectMigrations(app, rc)
+
 		err := app.InTx(rc, mvpm.SafeWriter, func() error {
 			runHooksFwd2(app.Hooks.initDB, app, rc)
+			executeMigrations(allMigrations, rc)
 			return nil
 		})
 		if err != nil {

@@ -12,6 +12,7 @@ type Hooks struct {
 	initRC       []func(app *App, rc *RC)
 	closeRC      []func(app *App, rc *RC)
 	initDB       []func(app *App, rc *RC)
+	migrate      []func(app *App, b *MigrationBuilder)
 	makeRowKey   []func(app *App, tbl *edb.Table) any
 	resetAuth    []func(app *App, rc *RC)
 	postAuth     []func(app *App, rc *RC) error
@@ -42,6 +43,10 @@ func (h *Hooks) CloseRC(f func(app *App, rc *RC)) {
 
 func (h *Hooks) InitDB(f func(app *App, rc *RC)) {
 	h.initDB = append(h.initDB, f)
+}
+
+func (h *Hooks) Migrate(f func(app *App, b *MigrationBuilder)) {
+	h.migrate = append(h.migrate, f)
 }
 
 func (h *Hooks) MakeRowKey(f func(app *App, tbl *edb.Table) any) {
