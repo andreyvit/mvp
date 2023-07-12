@@ -23,10 +23,10 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 		panic(fmt.Errorf("%s", text))
 	}
 	m["iif"] = func(cond any, trueVal any, falseVal any) any {
-		if IsFalsy(cond) {
-			return falseVal
-		} else {
+		if mvphelpers.FuzzyBool(cond) {
 			return trueVal
+		} else {
+			return falseVal
 		}
 	}
 	m["repeat"] = func(n int) []int {
@@ -65,11 +65,23 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 		return nil
 	}
 	m["classes"] = JoinClasses
-	m["add"] = func(a, b int) int {
-		return a + b
+	m["add"] = func(a, b any) int {
+		return mvphelpers.FuzzyInt(a) + mvphelpers.FuzzyInt(b)
 	}
-	m["addone"] = func(v int) int {
-		return v + 1
+	m["addf"] = func(a, b any) float64 {
+		return mvphelpers.FuzzyFloat64(a) + mvphelpers.FuzzyFloat64(b)
+	}
+	m["mulf"] = func(a, b any) float64 {
+		return mvphelpers.FuzzyFloat64(a) * mvphelpers.FuzzyFloat64(b)
+	}
+	m["addone"] = func(v any) int {
+		return mvphelpers.FuzzyInt(v) + 1
+	}
+	m["gridoffsetf"] = func(start, size, gap, coord any) float64 {
+		return mvphelpers.FuzzyFloat64(start) + (mvphelpers.FuzzyFloat64(size)+mvphelpers.FuzzyFloat64(gap))*mvphelpers.FuzzyFloat64(coord)
+	}
+	m["gridsizef"] = func(base, size, gap, coord any) float64 {
+		return mvphelpers.FuzzyFloat64(base) + mvphelpers.FuzzyFloat64(size)*mvphelpers.FuzzyFloat64(coord) + mvphelpers.FuzzyFloat64(gap)*(mvphelpers.FuzzyFloat64(coord)-1)
 	}
 	m["defined"] = func(cond any) bool {
 		return cond != nil
@@ -251,18 +263,14 @@ func (app *App) renderIcon(data *RenderData) template.HTML {
 
 var svgStartRe = regexp.MustCompile(`(<svg)\s`)
 
-func IsFalsy(value any) bool {
-	return value == nil || value == "" || value == false
-}
-
 func Attr(name string, value any) template.HTMLAttr {
-	if IsFalsy(value) {
+	if !mvphelpers.FuzzyBool(value) {
 		return ""
 	}
 	if value == true {
 		return template.HTMLAttr(" " + name)
 	}
-	return template.HTMLAttr(" " + name + "=\"" + template.HTMLEscapeString(fmt.Sprint(value)) + "\"")
+	return template.HTMLAttr(" " + name + "=\"" + string(mvphelpers.FuzzyHTMLAttrValue(value)) + "\"")
 }
 
 func AttrsSwitch(attrs any) template.HTMLAttr {
@@ -279,11 +287,7 @@ func AttrsSwitch(attrs any) template.HTMLAttr {
 func Attrs(attrs map[string]string) template.HTMLAttr {
 	var buf strings.Builder
 	for k, v := range attrs {
-		buf.WriteByte(' ')
-		buf.WriteString(k)
-		buf.WriteString(`="`)
-		buf.WriteString(template.HTMLEscapeString(v))
-		buf.WriteByte('"')
+		mvphelpers.AppendAttr(&buf, k, v)
 	}
 	return template.HTMLAttr(buf.String())
 }
@@ -291,14 +295,7 @@ func Attrs(attrs map[string]string) template.HTMLAttr {
 func AttrsAny(attrs map[string]any) template.HTMLAttr {
 	var buf strings.Builder
 	for k, v := range attrs {
-		if IsFalsy(v) {
-			continue
-		}
-		buf.WriteByte(' ')
-		buf.WriteString(k)
-		buf.WriteString(`="`)
-		buf.WriteString(string(HTMLify(v)))
-		buf.WriteByte('"')
+		mvphelpers.AppendAttrAny(&buf, k, v)
 	}
 	return template.HTMLAttr(buf.String())
 }

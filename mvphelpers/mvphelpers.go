@@ -5,20 +5,33 @@ import "html/template"
 func FuncMap() template.FuncMap {
 	return template.FuncMap{
 		"in_groups_of": InGroupsOf,
+		"is_even":      IsEven,
+		"is_odd":       IsOdd,
+		"dict":         Dict,
+		"list":         List,
 	}
 }
 
-func InGroupsOf(n int, list []any) []Group {
-	count := (len(list) + n - 1) / n
+func IsEven(n any) bool {
+	return FuzzyInt(n)%2 == 0
+}
+
+func IsOdd(n any) bool {
+	return FuzzyInt(n)%2 == 1
+}
+
+func InGroupsOf(n int, list any) []Group {
+	allItems := FuzzyList(list)
+	count := (len(allItems) + n - 1) / n
 	result := make([]Group, count)
 	for i := 0; i < count; i++ {
 		result[i].Index = i
 		result[i].GroupSize = n
 		result[i].GroupCount = count
-		if len(list) > n {
-			result[i].Items, list = list[:n], list[n:]
+		if len(allItems) > n {
+			result[i].Items, allItems = allItems[:n], allItems[n:]
 		} else {
-			result[i].Items = list
+			result[i].Items = allItems
 		}
 	}
 	return result
