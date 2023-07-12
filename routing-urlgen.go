@@ -12,7 +12,10 @@ var (
 	Absolute = mvpm.NewURLOption("absolute")
 )
 
-type PathParamsMapAny map[string]any
+type (
+	PathParamsMapStr map[string]string
+	PathParamsMapAny map[string]any
+)
 
 // URL generates a relative (default) or absolute URL based on a named route.
 // Supply map[string]string or pairs of (key string, value string) arguments
@@ -28,7 +31,7 @@ func (app *App) URL(name string, extras ...any) string {
 	var g URLGen
 	for i := 0; i < len(extras); i++ {
 		switch extra := extras[i].(type) {
-		case map[string]string:
+		case PathParamsMapStr:
 			if g.PathKeys == nil {
 				g.PathKeys = extra
 			} else {
@@ -73,7 +76,7 @@ func (app *App) URL(name string, extras ...any) string {
 					g.QueryParams = make(url.Values)
 				}
 				g.QueryParams.Set(s, fmt.Sprint(extras[i]))
-			} else {
+			} else if s, ok := strings.CutPrefix(extra, ":"); ok {
 				if i+1 >= len(extras) {
 					panic(fmt.Errorf("route %s: no value following extra key %q", name, extra))
 				}
@@ -81,7 +84,7 @@ func (app *App) URL(name string, extras ...any) string {
 				if g.PathKeys == nil {
 					g.PathKeys = make(map[string]string)
 				}
-				g.PathKeys[extra] = fmt.Sprint(extras[i])
+				g.PathKeys[s] = fmt.Sprint(extras[i])
 			}
 		case mvpm.URLOption:
 			if extra == Absolute {
@@ -95,6 +98,9 @@ func (app *App) URL(name string, extras ...any) string {
 	path := route.path
 	if g.PathKeys != nil {
 		for k, v := range g.PathKeys {
+			if !strings.Contains(path, ":"+k) {
+				panic(fmt.Errorf("route %s: unsupported path param %q", name, k))
+			}
 			path = strings.ReplaceAll(path, ":"+k, v)
 		}
 	}
@@ -110,7 +116,7 @@ func (app *App) URL(name string, extras ...any) string {
 	runHooksFwd2(app.Hooks.urlGen, app, &g)
 
 	if strings.Contains(path, ":") {
-		panic(fmt.Errorf("route %s: not all path params specified in %q", name, path))
+		panic(fmt.Errorf("URL(%s, %#v): not all path params specified in %q, effective path keys = %v", name, extras, path, g.PathKeys))
 	}
 
 	// log.Printf("URL(%s, %v) = %s", name, extras, g.URL.String())
@@ -134,11 +140,12 @@ type URLGen struct {
 func (app *App) Redirect(name string, extras ...any) *Redirect {
 	path := app.URL(name, extras...)
 	return &Redirect{
-		Path: path,
+		Path:      path,
+		RouteName: name,
 	}
 }
 
-func (rc *RC) DefaultPathParams() map[string]string {
+func (rc *RC) DefaultPathParams() PathParamsMapStr {
 	// TODO: hook
 	return nil
 }

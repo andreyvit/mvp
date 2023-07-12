@@ -29,8 +29,8 @@ type ViewData struct {
 	Head template.HTML
 }
 
-func (vd *ViewData) DefaultPathParams() map[string]string {
-	defaults := make(map[string]string)
+func (vd *ViewData) DefaultPathParams() PathParamsMapStr {
+	defaults := make(PathParamsMapStr)
 	return defaults
 }
 
