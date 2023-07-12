@@ -14,11 +14,11 @@ type Child interface {
 
 type Children []Child
 
-func (cc *Children) Add(c Child) {
+func (cc *Children) Add(c ...Child) {
 	if c == nil {
 		return
 	}
-	*cc = append(*cc, c)
+	*cc = append(*cc, c...)
 }
 
 func (cc Children) Finalize(state *State) {
@@ -190,6 +190,8 @@ type Item struct {
 
 	Label    string
 	LabelTag TagOpts
+	Desc     string
+	DescTag  TagOpts
 	ItemTag  TagOpts
 	Styles   []*Style
 	Template string
