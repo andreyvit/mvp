@@ -41,18 +41,14 @@ func (app *App) ExecTemplate(w io.Writer, templateName string, data any) error {
 	return t.ExecuteTemplate(w, templateName, data)
 }
 
-func (app *App) RenderPartial(rc *RC, view string, data any) template.HTML {
-	vd := &ViewData{
-		View: view,
-		Data: data,
-	}
-	app.fillViewData(vd, rc)
+func RenderPartial(rc *RC, vd *ViewData) template.HTML {
+	rc.app.fillViewData(vd, rc)
 
 	var buf strings.Builder
-	err := app.freshTemplates(rc).ExecuteTemplate(&buf, view, &RenderData{Data: data, ViewData: vd})
+	err := rc.app.freshTemplates(rc).ExecuteTemplate(&buf, vd.View, &RenderData{Data: vd.Data, ViewData: vd})
 	if err != nil {
-		flogger.Log(rc, "FATAL: partial rendering failed: %v: %v", view, err)
-		panic(fmt.Sprintf("partial rendering failed: %v: %v", view, err))
+		flogger.Log(rc, "FATAL: partial rendering failed: %v: %v", vd.View, err)
+		panic(fmt.Sprintf("partial rendering failed: %v: %v", vd.View, err))
 	}
 	return template.HTML(buf.String())
 }
@@ -146,7 +142,7 @@ func (app *App) loadTemplates() (*template.Template, error) {
 			return fmt.Errorf("%s: %w", fullPath, err)
 		}
 		relPath := fullPath //strings.TrimPrefix(fullPath, app.Configuration.ViewsSubdir+"/")
-		log.Printf("loadTemplates sees: %v", relPath)
+		// log.Printf("loadTemplates sees: %v", relPath)
 		if !strings.HasSuffix(relPath, templateSuffix) {
 			return nil
 		}

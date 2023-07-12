@@ -16,6 +16,13 @@ func (app *App) initLive() {
 	app.liveQueue = mvplive.NewQueue(mvplive.QueueOptions{})
 }
 
+func PushPartial(rc RCish, vd *ViewData, elementID string, ch mvplive.Channel, ep mvplive.Envelope) {
+	content := RenderPartial(rc.BaseRC(), vd)
+	rc.BaseApp().PublishTurbo(rc, ch, ep, func(stream *hotwired.Stream) {
+		stream.Replace(elementID, string(content))
+	})
+}
+
 func (app *App) PublishTurbo(lc flogger.Context, ch mvplive.Channel, ep mvplive.Envelope, f func(stream *hotwired.Stream)) {
 	var stream hotwired.Stream
 	f(&stream)
