@@ -124,6 +124,8 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 }
 
 func (app *App) renderLink(data *RenderData) template.HTML {
+	// defer func() { mvphelpers.ExposeHelperPanic(recover()) }()
+
 	classes := make([]string, 0, 8)
 
 	href, _ := data.PopString("href")

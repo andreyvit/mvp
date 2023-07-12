@@ -1,6 +1,10 @@
 package mvphelpers
 
-import "html/template"
+import (
+	"html/template"
+	"log"
+	"runtime/debug"
+)
 
 func FuncMap() template.FuncMap {
 	return template.FuncMap{
@@ -9,6 +13,18 @@ func FuncMap() template.FuncMap {
 		"is_odd":       IsOdd,
 		"dict":         Dict,
 		"list":         List,
+	}
+}
+
+// ExposeHelperPanic helps to debug panics inside view helpers.
+// Add the following call at the start of a panicing helper:
+//
+//	defer func() { mvphelpers.ExposeHelperPanic(recover()) }()
+func ExposeHelperPanic(e any) {
+	if e != nil {
+		log.Printf("** ERROR: helper panic: %v", e)
+		debug.PrintStack()
+		panic(e)
 	}
 }
 
