@@ -10,6 +10,7 @@ import (
 
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/mvp/flake"
+	"github.com/andreyvit/mvp/flogger"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 	"github.com/uptrace/bunrouter"
 )
@@ -71,6 +72,19 @@ type RC struct {
 	RateLimitKey    string
 
 	extraLogger func(format string, args ...any)
+}
+
+type RCish interface {
+	BaseRC() *RC
+	BaseApp() *App
+	DBTx() *edb.Tx
+
+	IsLoggedIn() bool
+	SessionID() flake.ID
+	ActorRef() mvpm.Ref
+	Auth() Auth
+
+	flogger.Context
 }
 
 func NewRC(ctx context.Context, app *App, requestID string) *RC {
