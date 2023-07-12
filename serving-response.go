@@ -71,16 +71,19 @@ func (rc *RC) SendSSE(msg *sse.Msg) {
 	rc.RespWriter.(http.Flusher).Flush()
 }
 
-func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseWriter, r *http.Request) error {
+func (app *App) writeResponseExtras(rc *RC, w http.ResponseWriter, r *http.Request) {
 	for _, cookie := range rc.SetCookies {
 		http.SetCookie(w, cookie)
 	}
+}
+
+func (app *App) writeResponse(rc *RC, output any, w http.ResponseWriter, r *http.Request) error {
+	app.writeResponseExtras(rc, w, r)
 	switch output := output.(type) {
 	case *ViewData:
 		if output.View == "" {
-			output.View = strings.ReplaceAll(route.routeName, ".", "-")
+			output.View = strings.ReplaceAll(rc.Route.routeName, ".", "-")
 		}
-		output.Route = route
 		app.fillViewData(output, rc)
 		b, err := app.Render(rc, output)
 		if err != nil {
@@ -106,7 +109,7 @@ func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseW
 	case ResponseHandled:
 		break
 	default:
-		panic(fmt.Errorf("%s: invalid return value %T %v", route.desc, output, output))
+		panic(fmt.Errorf("%s: invalid return value %T %v", rc.Route.desc, output, output))
 	}
 	return nil
 }
@@ -115,4 +118,5 @@ func (app *App) fillViewData(output *ViewData, rc *RC) {
 	output.RC = BaseRC.AnyFull(rc)
 	output.baseRC = rc
 	output.App = app
+	output.Route = rc.Route
 }

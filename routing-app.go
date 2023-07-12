@@ -101,8 +101,9 @@ func (app *App) callRoute(route *Route, rc *RC, w http.ResponseWriter, req bunro
 		return nil
 	})
 	if err != nil {
+		app.writeResponseExtras(rc, w, req.Request)
 		return err
 	}
 
-	return app.writeResponse(rc, output, route, w, req.Request)
+	return app.writeResponse(rc, output, w, req.Request)
 }
