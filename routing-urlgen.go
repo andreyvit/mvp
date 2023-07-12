@@ -162,3 +162,9 @@ func (rc *RC) Redirect(name string, extras ...any) *Redirect {
 	}
 	return rc.app.Redirect(name, extras...)
 }
+
+func (rc *RC) RedirectBack() *Redirect {
+	referer := rc.Request.Header.Get("Referer")
+	// log.Printf("Referer = %q", referer)
+	return &Redirect{Path: referer}
+}
