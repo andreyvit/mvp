@@ -29,6 +29,9 @@ var _storeAffinityStrings = []string{
 func (v StoreAffinity) IsWriter() bool {
 	return v == SafeWriter || v == ExclusiveWriter
 }
+func (v StoreAffinity) WantsAutomaticTx() bool {
+	return v == SafeReader || v == SafeWriter || v == ExclusiveWriter
+}
 
 func (v StoreAffinity) String() string {
 	return _storeAffinityStrings[v]

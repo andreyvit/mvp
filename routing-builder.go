@@ -25,13 +25,12 @@ type (
 		routingContext
 	}
 
-	RouteOption         = any
-	routeFlagOption     int
-	nonIdempotentOption struct{}
+	RouteOption     = any
+	RouteFlagOption int
 )
 
 const (
-	ReadOnly routeFlagOption = 1 + iota
+	ReadOnly RouteFlagOption = 1 + iota
 	Mutator
 	IdempotentMutator
 )
@@ -165,7 +164,7 @@ func (g *RouteBuilder) addRoute(routeName, method, path string, isIdempotentByDe
 			if opt.IsWriter() {
 				route.idempotent = false
 			}
-		case routeFlagOption:
+		case RouteFlagOption:
 			switch opt {
 			case Mutator, IdempotentMutator:
 				route.idempotent = false
