@@ -5,7 +5,7 @@ import (
 	"mime/multipart"
 )
 
-type FileUpload[T any] struct {
+type FileUpload[T comparable] struct {
 	Template
 	TemplateStyle
 	Field
@@ -22,6 +22,15 @@ type FileUpload[T any] struct {
 func (FileUpload[T]) DefaultTemplate() string { return "control-file" }
 
 func (c *FileUpload[T]) Finalize(state *State) {
+	c.Binding.Validate(func(value T) (T, error) {
+		if c.Required {
+			var zero T
+			if value == zero {
+				return value, ErrRequired
+			}
+		}
+		return value, nil
+	})
 }
 
 func (c *FileUpload[T]) Process(data *FormData) {
