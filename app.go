@@ -16,6 +16,7 @@ import (
 	"github.com/andreyvit/mvp/mvpjobs"
 	"github.com/andreyvit/mvp/mvplive"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
+	"github.com/andreyvit/mvp/mvputil"
 	"github.com/andreyvit/mvp/postmark"
 	"github.com/uptrace/bunrouter"
 )
@@ -42,6 +43,7 @@ type App struct {
 	Settings      *Settings
 	Hooks         Hooks
 	BaseURL       *url.URL
+	IPForwarding  *mvputil.IPForwarding
 
 	stopApp func()
 	logf    func(format string, args ...any)
@@ -99,6 +101,9 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 
 	if app.BaseURL == nil && settings.BaseURL != "" {
 		app.BaseURL = must(url.Parse(settings.BaseURL))
+	}
+	app.IPForwarding = &mvputil.IPForwarding{
+		ProxyIPs: mvputil.MustParseCIDRs(settings.ForwardingProxyCIDRs),
 	}
 
 	app.initEphemeralJobs()

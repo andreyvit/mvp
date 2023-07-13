@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -61,6 +62,10 @@ type RC struct {
 	Start     time.Time // ACTUAL time of request start
 	Now       time.Time // wall clock time of request start
 	logf      func(format string, args ...any)
+
+	RealIPStr string
+	RealHost  string
+	RealTLS   bool
 
 	Route      *Route
 	Request    bunrouter.Request
@@ -177,6 +182,12 @@ func (app *App) NewHTTPRequestRC(w http.ResponseWriter, r bunrouter.Request) *RC
 	rc := NewRC(r.Context(), app, r.Header.Get("X-Request-ID"))
 	rc.Request = r
 	rc.RespWriter = w
+
+	var realIP net.IP
+	realIP, rc.RealHost, rc.RealTLS = app.IPForwarding.FromRequest(r.Request)
+	if realIP != nil {
+		rc.RealIPStr = realIP.String()
+	}
 	return rc
 }
 

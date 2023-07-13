@@ -28,8 +28,9 @@ type Settings struct {
 	KeyringFile        string
 
 	// HTTP server options
-	BindAddr string
-	BindPort int
+	BindAddr             string
+	BindPort             int
+	ForwardingProxyCIDRs string
 
 	// job options
 	WorkerCount           int

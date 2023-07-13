@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/andreyvit/httpform"
+	"github.com/andreyvit/mvp/mvputil"
 	"github.com/uptrace/bunrouter"
 )
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	domain := TrimPort(r.Host)
+	domain := mvputil.TrimPort(r.Host)
 	d := app.domainRouter.find(domain)
 	if d == nil {
 		http.Error(w, fmt.Sprintf("Invalid domain %q (wanted %s)", domain, strings.Join(app.domainRouter.ValidDomains(), ", ")), http.StatusMisdirectedRequest)
@@ -44,7 +45,7 @@ func initRouting(app *App) {
 
 	dr := &DomainRouter{}
 	if app.BaseURL != nil && app.BaseURL.Host != "" {
-		dr.Site(TrimPort(app.BaseURL.Host), DefaultSite)
+		dr.Site(mvputil.TrimPort(app.BaseURL.Host), DefaultSite)
 	}
 	runHooksFwd2(app.Hooks.domainRoutes, app, dr)
 	app.domainRouter = dr

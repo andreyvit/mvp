@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"mime"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -103,15 +102,6 @@ func WriteFileAtomic(path string, data []byte, perm fs.FileMode) (err error) {
 
 	ok = true
 	return nil
-}
-
-// TrimPort removes :port part (if any) from the given string and returns just the hostname.
-func TrimPort(host string) string {
-	h, _, _ := net.SplitHostPort(host)
-	if h == "" {
-		return host
-	}
-	return h
 }
 
 func DisableCaching(w http.ResponseWriter) {
