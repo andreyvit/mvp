@@ -21,6 +21,7 @@ var (
 
 type JobImpl struct {
 	Method         *mvprpc.Method
+	Enabled        bool
 	Kind           *mvpjobs.Kind
 	RepeatInterval time.Duration
 }

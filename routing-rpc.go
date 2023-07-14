@@ -3,6 +3,7 @@ package mvp
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/andreyvit/mvp/mvpjobs"
 	"github.com/andreyvit/mvp/mvprpc"
@@ -31,17 +32,29 @@ type CallRegistry interface {
 	CallImpl(method *mvprpc.Method, impl any)
 }
 
-func (app *App) JobImpl(kind *mvpjobs.Kind, impl any) {
+func (app *App) JobImpl(kind *mvpjobs.Kind, impl any, opts ...any) {
 	if app.jobsByKind == nil {
 		app.jobsByKind = make(map[*mvpjobs.Kind]*JobImpl)
 	}
 	if app.jobsByKind[kind] != nil {
 		panic(fmt.Errorf("job %s already has an impl defined", kind.Name))
 	}
-	app.jobsByKind[kind] = &JobImpl{
+	ji := &JobImpl{
+		Enabled:        true,
 		Kind:           kind,
 		RepeatInterval: kind.RepeatInterval,
 	}
+	for _, opt := range opts {
+		switch opt := opt.(type) {
+		case mvpjobs.WithRepeatInterval:
+			ji.RepeatInterval = time.Duration(opt)
+		case mvpjobs.WithEnabled:
+			ji.Enabled = bool(opt)
+		default:
+			panic(fmt.Errorf("invalid option %T %v", opt, opt))
+		}
+	}
+	app.jobsByKind[kind] = ji
 	app.MethodImpl(kind.Method, impl)
 }
 
