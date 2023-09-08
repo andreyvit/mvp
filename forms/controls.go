@@ -192,6 +192,7 @@ type Button struct {
 	FullAction string
 	Activated  bool
 	Title      string
+	Handler    func()
 }
 
 func (Button) DefaultTemplate() string { return "control-button" }
@@ -211,9 +212,16 @@ func (c *Button) Finalize(state *State) {
 	}
 }
 
+func (c *Button) EnumFields(f func(*Field)) {
+}
+
 func (c *Button) EnumBindings(f func(AnyBinding)) {
 }
 
 func (c *Button) Process(fd *FormData) {
+	// log.Printf("Button.Process c.FullAction=%q fd.Action=%q", c.FullAction, fd.Action)
 	c.Activated = (fd.Action == c.FullAction)
+	if c.Activated && c.Handler != nil {
+		c.Handler()
+	}
 }

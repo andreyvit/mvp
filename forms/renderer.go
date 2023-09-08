@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"strings"
 )
 
@@ -31,7 +30,7 @@ func (r *Renderer) RenderInto(buf *strings.Builder, item any) {
 	if c, ok := item.(Renderable); ok {
 		c.RenderInto(buf, r)
 	} else if t, ok := item.(Templated); ok {
-		log.Printf("rendering templated %T %v", t, t)
+		// log.Printf("rendering templated %T %v", t, t)
 		templ := t.CurrentTemplate()
 		if templ == "" {
 			templ = t.DefaultTemplate()

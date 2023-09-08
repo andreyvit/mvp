@@ -168,3 +168,17 @@ func (rc *RC) RedirectBack() *Redirect {
 	// log.Printf("Referer = %q", referer)
 	return &Redirect{Path: referer}
 }
+
+func (rc *RC) RedirectBackWith(values url.Values) *Redirect {
+	referer := rc.Request.Header.Get("Referer")
+	u, err := url.Parse(referer)
+	if err == nil {
+		q := u.Query()
+		for k, vv := range values {
+			q[k] = vv
+		}
+		u.RawQuery = q.Encode()
+	}
+	// log.Printf("Referer = %q", referer)
+	return &Redirect{Path: referer}
+}

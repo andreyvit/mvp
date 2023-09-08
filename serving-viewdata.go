@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"strings"
 
+	"github.com/andreyvit/minicomponents"
 	"github.com/andreyvit/mvp/flogger"
 )
 
@@ -58,7 +59,7 @@ type RenderData struct {
 }
 
 func (d *RenderData) ArgsByPrefix(prefix string) map[string]any {
-	prefix = prefix + "_"
+	prefix = prefix + "-"
 	var result map[string]any
 	for k, v := range d.Args {
 		if ck, ok := strings.CutPrefix(k, prefix); ok {
@@ -71,27 +72,10 @@ func (d *RenderData) ArgsByPrefix(prefix string) map[string]any {
 	return result
 }
 
-func (d *RenderData) Bind(value any, args ...any) *RenderData {
-	n := len(args)
-	if n%2 != 0 {
-		panic(fmt.Errorf("odd number of arguments %d: %v", n, args))
-	}
-	m := make(map[string]any, n/2)
-	for i := 0; i < n; i += 2 {
-		key, value := args[i], args[i+1]
-		if keyStr, ok := key.(string); ok {
-			keyStr = strings.ReplaceAll(keyStr, "-", "_")
-			m[keyStr] = value
-		} else {
-			panic(fmt.Errorf("argument %d must be a string, got %T: %v", i, key, key))
-		}
-	}
-	if len(m) == 0 {
-		m["__dummy"] = true
-	}
+func (d *RenderData) Bind(data any, args ...any) *RenderData {
 	return &RenderData{
-		Data:     value,
-		Args:     m,
+		Data:     data,
+		Args:     minicomponents.Args(args...),
 		ViewData: d.ViewData,
 	}
 }

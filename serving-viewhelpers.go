@@ -9,8 +9,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/andreyvit/minicomponents"
 	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/mvphelpers"
+	"golang.org/x/exp/maps"
 )
 
 func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
@@ -103,6 +105,15 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 	m["dump"] = func(v any) string {
 		return fmt.Sprintf("%T %v", v, v)
 	}
+	m["fallback"] = func(values ...any) any {
+		for _, v := range values {
+			if mvphelpers.FuzzyBool(v) {
+				return v
+			}
+		}
+		return nil
+	}
+	m["kv"] = minicomponents.Args
 }
 
 func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
@@ -132,15 +143,15 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	routeName, _ := data.PopString("route")
 	body, _ := data.PopHTMLSafeString("body")
 	classAttr, _ := data.PopString("class")
-	inactiveClassAttr, _ := data.PopString("inactive_class")
-	activeClassAttr, _ := data.PopString("active_class")
+	inactiveClassAttr, _ := data.PopString("inactive-class")
+	activeClassAttr, _ := data.PopString("active-class")
 	if activeClassAttr == "" {
 		activeClassAttr = "active"
 	}
 	sempathAttr, _ := data.PopString("sempath")
 	iconAttr, _ := data.PopString("icon")
-	iconClass, _ := data.PopString("icon_class")
-	pathParams, _ := data.PopMapSA("path_params")
+	iconClass, _ := data.PopString("icon-class")
+	pathParams, _ := data.PopMapSA("path-params")
 
 	var isActive, looksActive bool
 	if href != "" {
@@ -162,7 +173,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 			} else if ppv, found := pathParams[k]; found {
 				params[k] = fmt.Sprint(ppv)
 			} else if _, found = params[k]; !found {
-				panic(fmt.Errorf("route %s requires path param %s", routeName, k))
+				panic(fmt.Errorf("route %s requires path param %s (pathParams.keys = %v, args.keys = %v)", routeName, k, maps.Keys(pathParams), maps.Keys(data.Args)))
 			}
 		}
 
@@ -224,7 +235,8 @@ func (app *App) renderFuncButton(data *RenderData) template.HTML {
 	params := make(map[string]any)
 	// log.Printf("<c-func-button>: %s: params = %v", funcName, route.BodyParamNames())
 	for _, name := range route.BodyParamNames() {
-		v, ok := data.PopValue(name)
+		k := strings.ReplaceAll(name, "_", "-")
+		v, ok := data.PopValue(k)
 		if ok {
 			params[name] = v
 		}
@@ -250,7 +262,7 @@ func (app *App) renderFuncButton(data *RenderData) template.HTML {
 	}
 
 	for k, v := range data.Args {
-		k = strings.ReplaceAll(k, "_", "-")
+		// k = strings.ReplaceAll(k, "_", "-")
 		if isPassThruArg(k) {
 			mvphelpers.AppendAttrAny(&buf, k, v)
 		} else {

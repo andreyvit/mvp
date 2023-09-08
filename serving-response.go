@@ -38,8 +38,9 @@ func (redir *Redirect) Permanent() *Redirect {
 }
 
 type RawOutput struct {
-	Data       []byte
-	ContenType string
+	Data        []byte
+	ContentType string
+	Header      http.Header
 }
 
 // DebugOutput can be returned by request handlers
@@ -116,6 +117,9 @@ func (app *App) writeResponse(rc *RC, output any, w http.ResponseWriter, r *http
 }
 
 func (app *App) fillViewData(output *ViewData, rc *RC) {
+	if output.Data == nil {
+		output.Data = struct{}{}
+	}
 	output.RC = BaseRC.AnyFull(rc)
 	output.baseRC = rc
 	output.App = app

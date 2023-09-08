@@ -20,6 +20,7 @@ type templKind int
 const (
 	partialTempl = templKind(iota)
 	componentTempl
+	componentWithFuncTempl
 	layoutTempl
 	pageTempl
 )
@@ -42,15 +43,19 @@ func (app *App) ExecTemplate(w io.Writer, templateName string, data any) error {
 }
 
 func RenderPartial(rc *RC, vd *ViewData) template.HTML {
+	var buf strings.Builder
+	RenderPartialTo(&buf, rc, vd)
+	return template.HTML(buf.String())
+}
+
+func RenderPartialTo(wr io.Writer, rc *RC, vd *ViewData) {
 	rc.app.fillViewData(vd, rc)
 
-	var buf strings.Builder
-	err := rc.app.freshTemplates(rc).ExecuteTemplate(&buf, vd.View, &RenderData{Data: vd.Data, ViewData: vd})
+	err := rc.app.freshTemplates(rc).ExecuteTemplate(wr, vd.View, &RenderData{Data: vd.Data, ViewData: vd})
 	if err != nil {
 		flogger.Log(rc, "FATAL: partial rendering failed: %v: %v", vd.View, err)
 		panic(fmt.Sprintf("partial rendering failed: %v: %v", vd.View, err))
 	}
-	return template.HTML(buf.String())
 }
 
 func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
@@ -62,19 +67,21 @@ func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
 
 	rdata := &RenderData{Data: data.Data, ViewData: data}
 
-	var buf strings.Builder
-	err := t.ExecuteTemplate(&buf, data.View, rdata)
-	if err != nil {
-		return nil, err
+	if data.View != "none" {
+		var buf strings.Builder
+		err := t.ExecuteTemplate(&buf, data.View, rdata)
+		if err != nil {
+			return nil, err
+		}
+		data.Content = template.HTML(buf.String())
 	}
-	data.Content = template.HTML(buf.String())
 
 	if data.Layout == "none" {
 		return []byte(data.Content), nil
 	}
 
 	var buf2 bytes.Buffer
-	err = t.ExecuteTemplate(&buf2, "layouts/"+data.Layout, rdata)
+	err := t.ExecuteTemplate(&buf2, "layouts/"+data.Layout, rdata)
 	if err != nil {
 		return nil, err
 	}
@@ -176,18 +183,33 @@ func (app *App) loadTemplates() (*template.Template, error) {
 	}
 
 	comps := make(map[string]*minicomponents.ComponentDef)
+	compTempls := make(map[string]*templDef)
 	for _, tmpl := range templs {
 		if tmpl.kind == componentTempl {
 			comps[tmpl.name] = minicomponents.ScanTemplate(tmpl.code)
+			compTempls[tmpl.name] = tmpl
 		}
 	}
 	for k := range funcs {
 		if strings.HasPrefix(k, "c_") {
 			name := strings.ReplaceAll(k, "_", "-")
-			comps[name] = &minicomponents.ComponentDef{
-				RenderMethod: minicomponents.RenderMethodFunc,
-				ImplName:     k,
+			if comps[name] != nil {
+				panic(fmt.Errorf("%s is defined as both a function and a component; use prep_c_ prefix for a code-behind func", name))
+			} else {
+				comps[name] = &minicomponents.ComponentDef{
+					RenderMethod: minicomponents.RenderMethodFunc,
+					FuncName:     k,
+				}
 			}
+		} else if strings.HasPrefix(k, "prep_c_") {
+			name := strings.ReplaceAll(strings.TrimPrefix(k, "prep_"), "_", "-")
+			c := comps[name]
+			if c == nil {
+				panic(fmt.Errorf("no template to match code-behind func %s, wanted %s", k, name))
+			}
+			c.RenderMethod = minicomponents.RenderMethodFuncThenTemplate
+			c.FuncName = k
+			compTempls[name].kind = componentWithFuncTempl
 		}
 	}
 
@@ -202,7 +224,7 @@ func (app *App) loadTemplates() (*template.Template, error) {
 
 		if tmpl.kind == componentTempl {
 			code = "{{with .Args}}" + code + "{{end}}" + defines
-		} else if tmpl.kind == pageTempl || tmpl.kind == partialTempl {
+		} else if tmpl.kind == pageTempl || tmpl.kind == partialTempl || tmpl.kind == componentWithFuncTempl {
 			code = "{{with .Data}}" + code + "{{end}}" + defines
 		} else {
 			code = code + defines

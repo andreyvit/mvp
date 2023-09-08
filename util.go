@@ -104,22 +104,30 @@ func WriteFileAtomic(path string, data []byte, perm fs.FileMode) (err error) {
 	return nil
 }
 
+const (
+	CacheControlHeader          = "Cache-Control"
+	CacheControlUncachable      = "no-cache, no-store, no-transform, must-revalidate, private, max-age=0"
+	CacheControlPublicImmutable = "public, max-age=31536000, immutable"
+	CacheControlPublicMutable   = "public, no-cache, max-age=0"
+	CacheControlPrivateMutable  = "private, no-cache, max-age=0"
+)
+
 func DisableCaching(w http.ResponseWriter) {
 	w.Header().Set("Expires", "Thu, 01 Jan 1970 00:00:00 UTC")
-	w.Header().Set("Cache-Control", "no-cache, no-store, no-transform, must-revalidate, private, max-age=0")
+	w.Header().Set(CacheControlHeader, CacheControlUncachable)
 	w.Header().Set("Pragma", "no-cache")
 }
 
 func MarkPublicImmutable(w http.ResponseWriter) {
-	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	w.Header().Set(CacheControlHeader, CacheControlPublicImmutable)
 }
 
 func MarkPublicMutable(w http.ResponseWriter) {
-	w.Header().Set("Cache-Control", "public, no-cache, max-age=0")
+	w.Header().Set(CacheControlHeader, CacheControlPublicMutable)
 }
 
 func MarkPrivateMutable(w http.ResponseWriter) {
-	w.Header().Set("Cache-Control", "private, no-cache, max-age=0")
+	w.Header().Set(CacheControlHeader, CacheControlPrivateMutable)
 }
 
 func DetermineMIMEType(r *http.Request) string {
@@ -251,6 +259,7 @@ func AddSingleClass(classes []string, item string) []string {
 	if len(item) == 0 {
 		return classes
 	}
+	item = strings.TrimPrefix(item, ".")
 	if s, ok := strings.CutPrefix(item, "remove:"); ok {
 		if i := slices.Index(classes, s); i >= 0 {
 			return slices.Delete(classes, i, i+1)

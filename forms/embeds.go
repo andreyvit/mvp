@@ -44,6 +44,7 @@ type Link struct {
 	TemplateStyle
 	TagOpts
 	Link string
+	Text string
 }
 
 func (Link) DefaultTemplate() string { return "embed-link-a" }

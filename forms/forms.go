@@ -53,6 +53,10 @@ type Processor interface {
 	EnumBindings(f func(AnyBinding))
 	Process(data *FormData)
 }
+type PreProcessor interface {
+	Processor
+	PreProcess(data *FormData)
+}
 
 type FormData struct {
 	Action string
@@ -60,15 +64,20 @@ type FormData struct {
 	Files  map[string][]*multipart.FileHeader
 }
 
-func walk(child Child, f func(Child)) {
+func walk(child Child, pre func(Child), post func(Child)) {
 	if child == nil {
 		return
 	}
-	f(child)
+	if pre != nil {
+		pre(child)
+	}
 	if cntr, ok := child.(Container); ok {
 		cntr.EnumChildren(func(c Child) {
-			walk(c, f)
+			walk(c, pre, post)
 		})
+	}
+	if post != nil {
+		post(child)
 	}
 }
 
@@ -117,11 +126,15 @@ func (form *Form) Process(data *FormData) bool {
 		}
 	}
 	walk(&form.Group, func(c Child) {
+		if p, ok := c.(PreProcessor); ok {
+			p.PreProcess(data)
+		}
+	}, func(c Child) {
 		if p, ok := c.(Processor); ok {
 			p.Process(data)
 		}
 	})
-	return !form.Invalid()
+	return !form.Invalid() && (form.Action == "submit")
 }
 
 func (form *Form) finalize(data *FormData) {
