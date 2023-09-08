@@ -173,6 +173,7 @@ func SignHS256(claims, headerClaims Claims, key []byte, buf []byte) []byte {
 		if err != nil {
 			panic(err)
 		}
+		rawHeader = []byte(base64.RawURLEncoding.EncodeToString(rawHeader))
 	}
 	return SignHS256Raw(rawClaims, rawHeader, key, buf)
 }
@@ -291,8 +292,13 @@ func (token *Token) Parse(rawToken []byte) error {
 	if string(h) == hs256Header {
 		token.alg = HS256
 	} else {
+		dbuf := make([]byte, base64.RawURLEncoding.DecodedLen(len(h)))
+		n, err := base64.RawURLEncoding.Decode(dbuf, h)
+		if err != nil {
+			return ErrCorrupted
+		}
 		var hdr header
-		err := json.Unmarshal(h, &hdr)
+		err = json.Unmarshal(dbuf[:n], &hdr)
 		if err != nil {
 			return ErrCorrupted
 		}
