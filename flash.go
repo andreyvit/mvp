@@ -1,6 +1,7 @@
 package mvp
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"golang.org/x/exp/slices"
@@ -15,7 +16,7 @@ const (
 	MoodSubtle
 )
 
-var _moodStrings = []string{"neutral", "success", "failure"}
+var _moodStrings = []string{"neutral", "success", "failure", "subtle"}
 
 func (v Mood) String() string {
 	return _moodStrings[v]
@@ -30,10 +31,10 @@ func ParseMood(s string) (Mood, error) {
 }
 
 type Msg struct {
-	Text     string
-	Link     string
-	LinkText string
-	Mood     Mood
+	Text     string `json:"t,omitempty"`
+	Link     string `json:"l,omitempty"`
+	LinkText string `json:"lt,omitempty"`
+	Mood     Mood   `json:"m,omitempty"`
 }
 
 func (msg *Msg) Success() bool {
@@ -42,6 +43,25 @@ func (msg *Msg) Success() bool {
 
 func (msg *Msg) Failure() bool {
 	return msg.Mood == MoodFailure
+}
+
+func (msg *Msg) Encode() string {
+	if msg == nil || *msg == (Msg{}) {
+		return ""
+	}
+	return string(must(json.Marshal(msg)))
+}
+
+func DecodeMsg(raw string) *Msg {
+	if raw == "" {
+		return nil
+	}
+	msg := new(Msg)
+	_ = json.Unmarshal([]byte(raw), msg)
+	if *msg == (Msg{}) {
+		return nil
+	}
+	return msg
 }
 
 func SubtleMsg(text string) *Msg {
