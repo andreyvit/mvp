@@ -3,6 +3,8 @@ package hotwired
 import (
 	"bytes"
 	"html"
+	"net/http"
+	"strings"
 )
 
 const (
@@ -11,6 +13,10 @@ const (
 	ActionNameAppend  = "append"
 	ActionNamePrepend = "prepend"
 )
+
+func IsTurbo(r *http.Request) bool {
+	return strings.Contains(r.Header.Get("Accept"), StreamContentType)
+}
 
 type Stream struct {
 	Buffer bytes.Buffer
