@@ -306,6 +306,38 @@ func HTMLifyString(text string) template.HTML {
 	return template.HTML(strings.Join(lines, "<br>\n"))
 }
 
+var paraRe = regexp.MustCompile(`\n{2,}`)
+
+func HTMLifyMultiparValue(v any) template.HTML {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return HTMLifyMultiparString(v)
+	case template.HTML:
+		return v
+	default:
+		return HTMLifyMultiparString(fmt.Sprint(v))
+	}
+}
+
+func HTMLifyMultiparString(text string) template.HTML {
+	if !strings.Contains(text, "\n\n") {
+		return HTMLifyString(text)
+	}
+	var buf strings.Builder
+	for _, para := range paraRe.Split(text, -1) {
+		para = strings.TrimSpace(para)
+		if para == "" {
+			continue
+		}
+		buf.WriteString("<p>")
+		buf.WriteString(string(HTMLifyString(para)))
+		buf.WriteString("</p>")
+	}
+	return template.HTML(buf.String())
+}
+
 func sendSignal(c chan<- struct{}) {
 	c <- struct{}{}
 }

@@ -114,6 +114,9 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 		return nil
 	}
 	m["kv"] = minicomponents.Args
+	m["multipar"] = func(str any) template.HTML {
+		return HTMLifyMultiparValue(str)
+	}
 }
 
 func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
