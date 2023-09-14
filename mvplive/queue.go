@@ -59,6 +59,19 @@ func (q *Queue) Await(ctx context.Context, ch Channel, afterID flake.ID) []*Msg 
 	if debugLog {
 		log.Printf("mvplive: channel %v: Await(after=%v): start", ch, afterID)
 	}
+
+	// ensure q.cond.Wait() is terminated when ctx is canceled
+	tempc := make(chan struct{})
+	defer close(tempc)
+	go func() {
+		select {
+		case <-tempc:
+			break
+		case <-ctx.Done():
+			q.cond.Broadcast()
+		}
+	}()
+
 	for {
 		msgs := q.messagesAfterWithLockHeld(ch, afterID, q.cutoffIDByTime(time.Now()))
 		if debugLog {
