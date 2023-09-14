@@ -48,7 +48,7 @@ type DebugOutput string
 
 type ResponseHandled struct{}
 
-func (rc *RC) SendTurboStream(id uint64, f func(stream *hotwired.Stream)) {
+func (rc *RC) SendSSETurboStream(id uint64, f func(stream *hotwired.Stream)) {
 	// TODO: cache buffers
 	var stream hotwired.Stream
 	f(&stream)
