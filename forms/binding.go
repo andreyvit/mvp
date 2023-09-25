@@ -41,6 +41,20 @@ func Const[T any](value T) *Binding[T] {
 	}
 }
 
+func BindField[T, S any](b *Binding[S], field func(src *S) *T) *Binding[T] {
+	return &Binding[T]{
+		Value: *field(&b.Value),
+		Setter: func(source T) error {
+			value := b.Value
+			*field(&value) = source
+			b.Set(value)
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
 func (b *Binding[T]) Validate(validators ...Validator[T]) *Binding[T] {
 	b.Validators = append(b.Validators, validators...)
 	return b
@@ -237,6 +251,21 @@ func BindMapKey[T any, K comparable](m map[K]T, key K) *Binding[T] {
 		Value: m[key],
 		Setter: func(value T) error {
 			m[key] = value
+			return nil
+		},
+	}
+}
+
+func BindMapKeyDeletingZeros[T comparable, K comparable](m map[K]T, key K) *Binding[T] {
+	return &Binding[T]{
+		Value: m[key],
+		Setter: func(value T) error {
+			var zero T
+			if value == zero {
+				delete(m, key)
+			} else {
+				m[key] = value
+			}
 			return nil
 		},
 	}

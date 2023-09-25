@@ -1,5 +1,7 @@
 package forms
 
+import "html/template"
+
 type Template string
 
 func (t Template) CurrentTemplate() string {
@@ -38,6 +40,17 @@ type Text struct {
 func (Text) DefaultTemplate() string { return "embed-text" }
 
 func (Text) Finalize(state *State) {}
+
+type HTMLFragment struct {
+	Template
+	TemplateStyle
+	TagOpts
+	Text template.HTML
+}
+
+func (HTMLFragment) DefaultTemplate() string { return "embed-text" }
+
+func (HTMLFragment) Finalize(state *State) {}
 
 type Link struct {
 	Template

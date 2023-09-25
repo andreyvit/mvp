@@ -208,6 +208,9 @@ func (list *List[T]) EnumChildren(f func(Child)) {
 }
 
 func (list *List[T]) Process(fd *FormData) {
+	if list.Sort != nil {
+		list.Sort(list.items)
+	}
 	list.Binding.Set(list.items)
 }
 

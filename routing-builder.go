@@ -79,6 +79,15 @@ func (g *RouteBuilder) Route(routeName string, methodAndPath string, f any, opti
 	return g.addRoute(routeName, method, path, mi.Idempotent, f, options...)
 }
 
+func (g *RouteBuilder) RouteForm(routeName string, path string, f any, options ...RouteOption) *Route {
+	if strings.ContainsAny(path, " ") {
+		panic(fmt.Errorf("%v: RouteForm routes cannot contain methods or spaces in path: %q", routeName, path))
+	}
+	get := g.addRoute(routeName, "GET", path, true, f, options...)
+	g.addRoute(routeName+".save", "POST", path, false, f, options...)
+	return get
+}
+
 func (g *RouteBuilder) Func(f any, options ...RouteOption) *Route {
 	var funcName string
 	var possibleFuncNameOpt string

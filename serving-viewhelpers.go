@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"net/url"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -180,7 +181,19 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 			}
 		}
 
-		href = app.URL(routeName, params)
+		var qs url.Values
+		for k := range data.Args {
+			if s, ok := strings.CutPrefix(k, "query-"); ok {
+				if qs == nil {
+					qs = make(url.Values)
+				}
+				v, _ := data.PopString(k)
+				s = strings.ReplaceAll(s, "-", "_")
+				qs.Set(s, v)
+			}
+		}
+
+		href = app.URL(routeName, params, qs)
 		isActive = (data.Route != nil && data.Route.routeName == routeName)
 		looksActive = isActive
 		if sempathAttr != "" {

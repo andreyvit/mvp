@@ -1,15 +1,8 @@
 package forms
 
-import (
-	"errors"
-)
-
-var ErrRequired = errors.New("required")
-
 type ErrorSite interface {
 	AddError(err error)
 	NoteChildError()
-	Invalid() bool
 	Init(parent ErrorSite)
 }
 

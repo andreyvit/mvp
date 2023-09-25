@@ -16,6 +16,7 @@ type ViewData struct {
 	Layout       string
 	Data         any
 	SemanticPath string
+	StatusCode   int
 
 	ContentType string
 

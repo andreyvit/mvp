@@ -88,7 +88,17 @@ type Form struct {
 	URL       string
 	Group
 
+	ID     string
+	Turbo  bool
 	Action string
+}
+
+func (form *Form) TurboFrameID() string {
+	if form.ID == "" || !form.Turbo {
+		return ""
+	} else {
+		return form.ID + "-frame"
+	}
 }
 
 func (form *Form) Render(r *Renderer) template.HTML {
@@ -151,8 +161,7 @@ func (form *Form) finalize(data *FormData) {
 		classesCopied: make([]bool, 0, 50),
 	}
 	state.classes = append(state.classes, nil)
-	form.Group.isRootForm = true
-	form.Group.Form = form
+	form.Group.wrapperForm = form
 	state.finalizeTree(&form.Group)
 	form.fields = state.fields
 	state.Fin()
@@ -169,10 +178,13 @@ type Group struct {
 	Children Children
 	MultiErrorSite
 
-	isRootForm bool
-	Form       *Form
+	wrapperForm any
 
 	InnerHTML template.HTML
+}
+
+func (group *Group) AddChild(children ...Child) {
+	group.Children.Add(children...)
 }
 
 func (group *Group) EnumChildren(f func(Child)) {
@@ -184,7 +196,7 @@ func (group *Group) Finalize(state *State) {
 	state.PushErrorSite(&group.MultiErrorSite)
 	state.PushStyles(group.Styles)
 	if group.Template == "" {
-		if group.isRootForm {
+		if group.wrapperForm != nil {
 			group.Template = state.LookupTemplate("form")
 		} else {
 			group.Template = state.LookupTemplate("group")
@@ -194,7 +206,11 @@ func (group *Group) Finalize(state *State) {
 
 func (group *Group) RenderInto(buf *strings.Builder, r *Renderer) {
 	group.InnerHTML = r.Render(group.Children)
-	r.RenderWrapperTemplateInto(buf, group.Template, group, group.InnerHTML)
+	if group.wrapperForm != nil {
+		r.RenderWrapperTemplateInto(buf, group.Template, group.wrapperForm, group.InnerHTML)
+	} else {
+		r.RenderWrapperTemplateInto(buf, group.Template, group, group.InnerHTML)
+	}
 }
 
 type Item struct {

@@ -94,6 +94,9 @@ func (app *App) writeResponse(rc *RC, output any, w http.ResponseWriter, r *http
 		if output.ContentType != "" {
 			w.Header().Set("Content-Type", output.ContentType)
 		}
+		if output.StatusCode != 0 {
+			w.WriteHeader(output.StatusCode)
+		}
 		w.Write(b)
 	case *Redirect:
 		path := output.Path

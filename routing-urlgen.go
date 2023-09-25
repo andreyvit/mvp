@@ -32,29 +32,35 @@ func (app *App) URL(name string, extras ...any) string {
 	for i := 0; i < len(extras); i++ {
 		switch extra := extras[i].(type) {
 		case PathParamsMapStr:
-			if g.PathKeys == nil {
-				g.PathKeys = extra
-			} else {
-				for k, v := range extra {
-					g.PathKeys[k] = v
+			if len(extra) > 0 {
+				if g.PathKeys == nil {
+					g.PathKeys = extra
+				} else {
+					for k, v := range extra {
+						g.PathKeys[k] = v
+					}
 				}
 			}
 		case PathParamsMapAny:
-			if g.PathKeys == nil {
-				g.PathKeys = make(map[string]string)
-			}
-			for k, v := range extra {
-				if v == nil {
-					continue
+			if len(extra) > 0 {
+				if g.PathKeys == nil {
+					g.PathKeys = make(map[string]string)
 				}
-				g.PathKeys[k] = fmt.Sprint(v)
+				for k, v := range extra {
+					if v == nil {
+						continue
+					}
+					g.PathKeys[k] = fmt.Sprint(v)
+				}
 			}
 		case url.Values:
-			if g.QueryParams == nil {
-				g.QueryParams = extra
-			} else {
-				for k, vv := range extra {
-					g.QueryParams[k] = vv
+			if len(extra) > 0 {
+				if g.QueryParams == nil {
+					g.QueryParams = extra
+				} else {
+					for k, vv := range extra {
+						g.QueryParams[k] = vv
+					}
 				}
 			}
 		case string:
