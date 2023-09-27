@@ -28,7 +28,7 @@ func (app *App) DecodeAuthToken(rc *RC, token string) error {
 	runHooksFwd2(app.Hooks.resetAuth, app, rc)
 
 	c := TokenDecoding{
-		Now: rc.Now,
+		Now: rc.Now(),
 	}
 	err := c.Token.ParseString(token)
 	if err != nil {

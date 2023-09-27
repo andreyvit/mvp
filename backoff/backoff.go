@@ -33,6 +33,16 @@ var GoodBackoff = Backoff{
 	MaxBackoffDelay: time.Hour,
 }
 
+var SlowBackoff = Backoff{
+	FixedDelayRetries: 1,
+	FixedDelay:        time.Second,
+
+	MinBackoffDelay: 1 * time.Minute,
+	BackoffRetries:  20,
+	MaxBackoffDelay: 4 * time.Hour,
+	BackoffFactor:   4,
+}
+
 var NoBackoff = Backoff{}
 
 func (b Backoff) DelayAfter(failedAttempts int) time.Duration {

@@ -114,6 +114,12 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 	for _, mod := range app.Settings.Configuration.Modules {
 		app.addModule(mod)
 	}
+	for _, kind := range app.JobSchema.Kinds() {
+		if kind.IsPersistent() {
+			app.JobImpl(kind)
+		}
+	}
+	log.Printf("app jobs: %v", app.JobSchema.PersistentKindNames())
 
 	initAppDB(app, &opt)
 	initViews(app, &opt)
@@ -145,11 +151,13 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 }
 
 func (app *App) addModule(mod *Module) {
+	log.Printf("app including module %s", mod.Name)
 	if mod.DBSchema != nil {
 		app.DBSchema.Include(mod.DBSchema)
 	}
-	if app.JobSchema != nil {
-		app.JobSchema.Include(app.JobSchema)
+	if mod.JobSchema != nil {
+		log.Printf("... app including module %s jobs %v and %v", mod.Name, mod.JobSchema.PersistentKindNames(), mod.JobSchema.EphemeralKindNames())
+		app.JobSchema.Include(mod.JobSchema)
 	}
 }
 

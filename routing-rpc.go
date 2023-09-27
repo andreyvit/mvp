@@ -3,7 +3,6 @@ package mvp
 import (
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/andreyvit/mvp/mvpjobs"
 	"github.com/andreyvit/mvp/mvprpc"
@@ -25,14 +24,14 @@ func (app *App) doCall(rc *RC, m *MethodImpl, in any) (any, error) {
 }
 
 type JobRegistry interface {
-	JobImpl(kind *mvpjobs.Kind, impl any)
+	JobImpl(kind *mvpjobs.Kind, impl any, opts ...any)
 }
 
 type CallRegistry interface {
 	CallImpl(method *mvprpc.Method, impl any)
 }
 
-func (app *App) JobImpl(kind *mvpjobs.Kind, impl any, opts ...any) {
+func (app *App) JobImpl(kind *mvpjobs.Kind) {
 	if app.jobsByKind == nil {
 		app.jobsByKind = make(map[*mvpjobs.Kind]*JobImpl)
 	}
@@ -40,22 +39,12 @@ func (app *App) JobImpl(kind *mvpjobs.Kind, impl any, opts ...any) {
 		panic(fmt.Errorf("job %s already has an impl defined", kind.Name))
 	}
 	ji := &JobImpl{
-		Enabled:        true,
+		Enabled:        kind.Enabled,
 		Kind:           kind,
 		RepeatInterval: kind.RepeatInterval,
 	}
-	for _, opt := range opts {
-		switch opt := opt.(type) {
-		case mvpjobs.WithRepeatInterval:
-			ji.RepeatInterval = time.Duration(opt)
-		case mvpjobs.WithEnabled:
-			ji.Enabled = bool(opt)
-		default:
-			panic(fmt.Errorf("invalid option %T %v", opt, opt))
-		}
-	}
 	app.jobsByKind[kind] = ji
-	app.MethodImpl(kind.Method, impl)
+	app.MethodImpl(kind.Method, kind.Handler)
 }
 
 func (app *App) MethodImpl(method *mvprpc.Method, impl any) {

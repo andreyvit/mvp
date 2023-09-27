@@ -53,8 +53,7 @@ func RenderPartialTo(wr io.Writer, rc *RC, vd *ViewData) {
 
 	err := rc.app.freshTemplates(rc).ExecuteTemplate(wr, vd.View, &RenderData{Data: vd.Data, ViewData: vd})
 	if err != nil {
-		flogger.Log(rc, "FATAL: partial rendering failed: %v: %v", vd.View, err)
-		panic(fmt.Sprintf("partial rendering failed: %v: %v", vd.View, err))
+		panic(PartialRenderingError(vd.View, err))
 	}
 }
 

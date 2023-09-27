@@ -23,7 +23,7 @@ func (scm *Schema) init() {
 
 func (scm *Schema) Include(peer *Schema) {
 	scm.init()
-	for _, kind := range scm.kinds {
+	for _, kind := range peer.kinds {
 		if existing := scm.kinds[kind.Name]; existing != nil {
 			panic(fmt.Errorf("job kind %q defined in both %q and %q", kind.Name, existing.schema.Name, kind.schema.Name))
 		}

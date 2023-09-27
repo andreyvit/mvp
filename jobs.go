@@ -26,7 +26,12 @@ type JobImpl struct {
 	RepeatInterval time.Duration
 }
 
-func (app *App) Enqueue(rc *RC, kind *mvpjobs.Kind, in mvpjobs.Params) *mvpjobs.Job {
+type jobImpl struct {
+	f    any
+	opts []any
+}
+
+func (app *App) Enqueue(rc RCish, kind *mvpjobs.Kind, in mvpjobs.Params) *mvpjobs.Job {
 	name := in.JobName()
 	if j := app.Job(rc, kind, name); j != nil {
 		app.Reenqueue(rc, kind, j, in, false)
@@ -39,32 +44,32 @@ func (app *App) Enqueue(rc *RC, kind *mvpjobs.Kind, in mvpjobs.Params) *mvpjobs.
 		Name:        in.JobName(),
 		RawParams:   mvpjobs.EncodeParams(in),
 		Status:      mvpjobs.StatusQueued,
-		NextRunTime: rc.Now,
-		EnqueueTime: rc.Now,
+		NextRunTime: rc.Now(),
+		EnqueueTime: rc.Now(),
 	}
 	edb.Put(rc, j)
 	return j
 }
 
-func (app *App) Reenqueue(rc *RC, kind *mvpjobs.Kind, j *mvpjobs.Job, in mvpjobs.Params, force bool) {
+func (app *App) Reenqueue(rc RCish, kind *mvpjobs.Kind, j *mvpjobs.Job, in mvpjobs.Params, force bool) {
 	if kind.Behavior == mvpjobs.Repeatable {
 		if j.Status == mvpjobs.StatusRunning {
 			j.Status = mvpjobs.StatusRunningPending
 			if in != nil {
 				j.RawParams = mvpjobs.EncodeParams(in)
 			}
-			j.NextRunTime = rc.Now
+			j.NextRunTime = rc.Now()
 			edb.Put(rc, j)
 		} else if j.Status.IsTerminal() {
 			j.Status = mvpjobs.StatusQueued
 			if in != nil {
 				j.RawParams = mvpjobs.EncodeParams(in)
 			}
-			j.NextRunTime = rc.Now
-			j.EnqueueTime = rc.Now
+			j.NextRunTime = rc.Now()
+			j.EnqueueTime = rc.Now()
 			edb.Put(rc, j)
-		} else if j.Status.IsPending() && j.NextRunTime.After(rc.Now) {
-			j.NextRunTime = rc.Now
+		} else if j.Status.IsPending() && j.NextRunTime.After(rc.Now()) {
+			j.NextRunTime = rc.Now()
 			if in != nil {
 				j.RawParams = mvpjobs.EncodeParams(in)
 			}
@@ -76,11 +81,11 @@ func (app *App) Reenqueue(rc *RC, kind *mvpjobs.Kind, j *mvpjobs.Job, in mvpjobs
 			if in != nil {
 				j.RawParams = mvpjobs.EncodeParams(in)
 			}
-			j.NextRunTime = rc.Now
-			j.EnqueueTime = rc.Now
+			j.NextRunTime = rc.Now()
+			j.EnqueueTime = rc.Now()
 			edb.Put(rc, j)
-		} else if j.Status.IsPending() && j.NextRunTime.After(rc.Now) {
-			j.NextRunTime = rc.Now
+		} else if j.Status.IsPending() && j.NextRunTime.After(rc.Now()) {
+			j.NextRunTime = rc.Now()
 			if in != nil {
 				j.RawParams = mvpjobs.EncodeParams(in)
 			}
@@ -163,7 +168,7 @@ func (app *App) RunJob(ctx context.Context, kind *mvpjobs.Kind, params mvpjobs.P
 func (app *App) runPendingJobsOnce(rc *RC, workerIdx, workerCount int) int {
 	var count int
 	for {
-		rc.Now = app.Now()
+		rc.RefreshNowTime()
 		if app.runSinglePendingJob(rc, workerIdx, workerCount) {
 			count++
 			// } else ...TODO: cron... { ...
@@ -180,12 +185,14 @@ func (app *App) runSinglePendingJob(rc *RC, workerIdx, workerCount int) bool {
 		return false
 	}
 	kind := app.JobSchema.KindByName(j.Kind)
-	if kind == nil {
-		panic(fmt.Errorf("dequeued unknown kind %q", j.Kind))
-	}
-	jobErr := app.executeJob(rc, j.ID, kind, j.Name, j.RawParams, j.Attempt, workerIdx, workerCount)
-	dur := time.Since(j.StartTime)
 
+	var jobErr error
+	if kind == nil {
+		jobErr = fmt.Errorf("unknown job kind: %q", j.Kind)
+	} else {
+		jobErr = app.executeJob(rc, j.ID, kind, j.Name, j.RawParams, j.Attempt, workerIdx, workerCount)
+	}
+	dur := time.Since(j.StartTime)
 	if jobErr != nil {
 		log.Printf("** WARNING: job failed: %s %v %s: %v", j.Kind, j.ID, j.RawParams, jobErr)
 	}
@@ -203,9 +210,16 @@ func (app *App) markJobCompleted(rc *RC, kind *mvpjobs.Kind, j *mvpjobs.Job, job
 		j.TotalDuration += dur
 	}
 	now := app.Now()
-	jobImpl := app.jobsByKind[kind]
-	if jobImpl == nil {
-		panic(fmt.Errorf("jobImpl not found for job %s", kind.Name))
+
+	var jobImpl *JobImpl
+	if kind != nil {
+		jobImpl = app.jobsByKind[kind]
+		if jobImpl == nil {
+			panic(fmt.Errorf("jobImpl not found for job %s", kind.Name))
+		}
+	} else {
+		jobImpl = &JobImpl{}
+		kind = &mvpjobs.Kind{}
 	}
 
 	if jobErr != nil {
@@ -269,7 +283,7 @@ func (app *App) dequeuePendingJob(rc *RC) *mvpjobs.Job {
 		c := edb.IndexScan[mvpjobs.Job](rc, pendingJobsByRunTime, edb.FullScan())
 		if c.Next() {
 			j = c.Row()
-			if j.NextRunTime.After(rc.Now) {
+			if j.NextRunTime.After(rc.Now()) {
 				// flogger.Log(rc, "dequeued job %s %v, which is in the future", j.Kind, j.ID)
 				j = nil
 			} else {

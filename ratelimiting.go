@@ -85,10 +85,11 @@ func (app *App) enforceRateLimit(rc *RC) (any, error) {
 
 	enforce := func(gran RateLimitGranularity, key string) error {
 		if limiter := limiters[gran]; limiter != nil {
-			rsrv := limiter.Limiter(key).ReserveN(rc.Now, 1)
-			delay := rsrv.DelayFrom(rc.Now)
+			now := rc.Now()
+			rsrv := limiter.Limiter(key).ReserveN(now, 1)
+			delay := rsrv.DelayFrom(now)
 			if delay > app.Settings.MaxRateLimitRequestDelay.Value() {
-				rsrv.CancelAt(rc.Now)
+				rsrv.CancelAt(now)
 				flogger.Log(rc, "ratelimit: %s:%s hard rate limit exceeded (refusing to sleep for %d ms)", preset, gran, delay.Milliseconds())
 				return ErrTooManyRequests
 			}

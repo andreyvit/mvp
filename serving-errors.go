@@ -44,3 +44,24 @@ func (rc *RC) Fail(err error) {
 		flogger.Log(rc, "WARNING: %v", err)
 	}
 }
+
+type RenderingError struct {
+	Kind     string
+	Template string
+	Cause    error
+}
+
+func ViewRenderingError(templ string, cause error) error {
+	return &RenderingError{"view", templ, cause}
+}
+func PartialRenderingError(templ string, cause error) error {
+	return &RenderingError{"partial", templ, cause}
+}
+
+func (err *RenderingError) Error() string {
+	return fmt.Sprintf("rendering %v %s: %v", err.Kind, err.Template, err.Cause)
+}
+
+func (err *RenderingError) SkipStackOnPanic() bool {
+	return true
+}

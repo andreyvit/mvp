@@ -1,10 +1,15 @@
 package mvpjobs
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/andreyvit/mvp/flake"
+)
 
 type Params interface {
 	JobName() string
 	SetJobName(name string)
+	JobAccountID() flake.ID
 }
 
 func EncodeParams(in Params) []byte {

@@ -60,7 +60,7 @@ type RC struct {
 
 	RequestID string
 	Start     time.Time // ACTUAL time of request start
-	Now       time.Time // wall clock time of request start
+	now       time.Time // wall clock time of request start
 	logf      func(format string, args ...any)
 
 	RealIPStr string
@@ -83,6 +83,8 @@ type RCish interface {
 	BaseRC() *RC
 	BaseApp() *App
 	DBTx() *edb.Tx
+	Now() time.Time
+	RefreshNowTime()
 
 	IsLoggedIn() bool
 	SessionID() flake.ID
@@ -103,7 +105,7 @@ func NewRC(ctx context.Context, app *App, requestID string) *RC {
 		app:       app,
 		RequestID: requestID,
 		Start:     time.Now(),
-		Now:       time.Now(),
+		now:       time.Now(),
 	}
 	runHooksFwd2(app.Hooks.initRC, app, rc)
 	return rc
@@ -122,6 +124,18 @@ func (rc *RC) App() *App {
 
 func (rc *RC) BaseRC() *RC {
 	return rc
+}
+
+func (rc *RC) NewID() flake.ID {
+	return rc.app.NewID()
+}
+
+func (rc *RC) Now() time.Time {
+	return rc.now
+}
+
+func (rc *RC) RefreshNowTime() {
+	rc.now = rc.app.Now()
 }
 
 func (rc *RC) SessionID() flake.ID {
