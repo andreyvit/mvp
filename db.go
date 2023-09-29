@@ -43,40 +43,75 @@ func (app *App) NewID() flake.ID {
 	return app.gen.New()
 }
 
-func (app *App) InTx(rc *RC, affinity mvpm.StoreAffinity, f func() error) error {
-	if affinity == mvpm.DBUnused {
+func (rc *RC) DBTx() *edb.Tx {
+	if rc.tx == nil {
+		rc.tx = rc.app.db.BeginRead()
+	}
+	return rc.tx
+}
+
+func (rc *RC) InTx(affinity mvpm.StoreAffinity, f func() error) error {
+	if !affinity.WantsAutomaticTx() {
 		return f()
 	}
 	if rc.tx != nil {
 		if affinity.IsWriter() && !rc.tx.IsWritable() {
-			panic("cannot initiate a mutating tx from read-only one")
-		}
-		return f()
-	} else {
-		return app.db.Tx(affinity.IsWriter(), func(tx *edb.Tx) error {
-			rc.tx = tx
-			defer func() {
-				rc.tx = nil
-			}()
+			rc.DoneReading()
+		} else {
 			return f()
-		})
+		}
 	}
+	return rc.app.db.Tx(affinity.IsWriter(), func(tx *edb.Tx) error {
+		rc.tx = tx
+		tx.OnChange(rc.onDBChange)
+		defer func() {
+			rc.tx = nil
+		}()
+		return f()
+	})
 }
 
-func (app *App) Read(rc *RC, f func() error) error {
-	return app.InTx(rc, mvpm.SafeReader, f)
+// func (rc *RC) Commit() error {
+// 	if rc.tx == nil {
+// 		return nil
+// 	}
+// 	var errs error
+// 	if rc.tx.IsWritable() {
+// 		err := rc.tx.Commit()
+// 		if err != nil {
+// 			errs = err
+// 		}
+// 	}
+// 	rc.tx.Close()
+// 	rc.tx = nil
+// 	return errs
+// }
+
+func (rc *RC) DoneReading() {
+	if rc.tx == nil {
+		return
+	}
+	if rc.tx.IsWritable() {
+		panic("DoneReading on a writable transaction")
+	}
+	rc.tx.Close()
+	rc.tx = nil
 }
-func (app *App) Write(rc *RC, f func() error) error {
-	return app.InTx(rc, mvpm.SafeWriter, f)
+
+func (rc *RC) TryRead(f func() error) error {
+	return rc.InTx(mvpm.SafeReader, f)
 }
-func (app *App) MustRead(rc *RC, f func()) {
-	ensure(app.InTx(rc, mvpm.SafeReader, func() error {
+func (rc *RC) TryWrite(f func() error) error {
+	return rc.InTx(mvpm.SafeWriter, f)
+}
+func (rc *RC) MustRead(f func()) {
+	ensure(rc.InTx(mvpm.SafeReader, func() error {
 		f()
 		return nil
 	}))
 }
-func (app *App) MustWrite(rc *RC, f func()) {
-	ensure(app.InTx(rc, mvpm.SafeWriter, func() error {
+func (rc *RC) MustWrite(f func()) {
+	ensure(rc.InTx(mvpm.SafeWriter, func() error {
 		f()
 		return nil
 	}))

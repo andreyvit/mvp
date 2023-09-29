@@ -91,6 +91,13 @@ type RCish interface {
 	ActorRef() mvpm.Ref
 	Auth() Auth
 
+	InTx(affinity mvpm.StoreAffinity, f func() error) error
+	TryRead(f func() error) error
+	TryWrite(f func() error) error
+	MustRead(f func())
+	MustWrite(f func())
+	DoneReading()
+
 	flogger.Context
 }
 
@@ -156,13 +163,6 @@ func (rc *RC) Auth() Auth {
 
 func (rc *RC) BaseApp() *App {
 	return rc.app
-}
-
-func (rc *RC) DBTx() *edb.Tx {
-	if rc.tx == nil {
-		panic("rc does not have tx open")
-	}
-	return rc.tx
 }
 
 func (rc *RC) Logf(format string, args ...any) {

@@ -98,7 +98,7 @@ func (app *App) failRunningJobs(ctx context.Context) {
 	rc := NewRC(ctx, app, "jobs")
 
 	var jobsToFail []*mvpjobs.Job
-	app.MustRead(rc, func() {
+	rc.MustRead(func() {
 		for c := edb.FullIndexScan[mvpjobs.Job](rc, runningJobsByStartTime); c.Next(); {
 			j := c.Row()
 			if !j.Status.IsRunning() {
@@ -111,7 +111,7 @@ func (app *App) failRunningJobs(ctx context.Context) {
 		}
 	})
 	if len(jobsToFail) > 0 {
-		app.MustWrite(rc, func() {
+		rc.MustWrite(func() {
 			for _, j := range jobsToFail {
 				kind := app.JobSchema.KindByName(j.Kind)
 				app.markJobCompleted(rc, kind, j, errJobCrashed, -1)
@@ -197,7 +197,7 @@ func (app *App) runSinglePendingJob(rc *RC, workerIdx, workerCount int) bool {
 		log.Printf("** WARNING: job failed: %s %v %s: %v", j.Kind, j.ID, j.RawParams, jobErr)
 	}
 
-	app.MustWrite(rc, func() {
+	rc.MustWrite(func() {
 		j := edb.Reload(rc, j)
 		app.markJobCompleted(rc, kind, j, jobErr, dur)
 	})
@@ -279,7 +279,7 @@ func (app *App) executeJob(ctx context.Context, jid mvpjobs.JobID, kind *mvpjobs
 
 func (app *App) dequeuePendingJob(rc *RC) *mvpjobs.Job {
 	var j *mvpjobs.Job
-	app.MustWrite(rc, func() {
+	rc.MustWrite(func() {
 		c := edb.IndexScan[mvpjobs.Job](rc, pendingJobsByRunTime, edb.FullScan())
 		if c.Next() {
 			j = c.Row()

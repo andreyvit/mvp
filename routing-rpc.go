@@ -15,7 +15,7 @@ type MethodImpl struct {
 
 func (app *App) doCall(rc *RC, m *MethodImpl, in any) (any, error) {
 	var out any
-	callErr := app.InTx(rc, m.StoreAffinity, func() error {
+	callErr := rc.InTx(m.StoreAffinity, func() error {
 		var err error
 		out, err = m.call(rc, in)
 		return err

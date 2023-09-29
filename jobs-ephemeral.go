@@ -7,7 +7,6 @@ import (
 
 	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/mvpjobs"
-	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )
 
 type EphemeralJobQueue struct {
@@ -88,7 +87,7 @@ func (app *App) runEphemeralJob(rc *RC, job *EphemeralJob) {
 	defer func() { rc.RequestID = "" }()
 
 	flogger.Log(rc, "ephemeral job starting")
-	err := app.InTx(rc, mvpm.SafeWriter, func() error {
+	err := rc.InTx(job.Kind.Method.StoreAffinity, func() error {
 		return job.F(rc)
 	})
 	if err != nil {

@@ -15,7 +15,6 @@ import (
 	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/mvp/mvpjobs"
 	"github.com/andreyvit/mvp/mvplive"
-	mvpm "github.com/andreyvit/mvp/mvpmodel"
 	"github.com/andreyvit/mvp/mvputil"
 	"github.com/andreyvit/mvp/postmark"
 	"github.com/uptrace/bunrouter"
@@ -139,14 +138,10 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 		rc := NewRC(ctx, app, "init")
 		allMigrations := collectMigrations(app, rc)
 
-		err := app.InTx(rc, mvpm.SafeWriter, func() error {
+		rc.MustWrite(func() {
 			runHooksFwd2(app.Hooks.initDB, app, rc)
 			executeMigrations(allMigrations, rc)
-			return nil
 		})
-		if err != nil {
-			panic(fmt.Errorf("db init failed: %v", err))
-		}
 	}
 }
 

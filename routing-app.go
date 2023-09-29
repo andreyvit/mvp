@@ -72,7 +72,7 @@ func (app *App) callRoute(route *Route, rc *RC, w http.ResponseWriter, req bunro
 
 	var output any
 
-	err = app.InTx(rc, route.storeAffinity, func() error {
+	err = rc.InTx(route.storeAffinity, func() error {
 		for _, mw := range route.middleware {
 			if mw.f == nil {
 				continue

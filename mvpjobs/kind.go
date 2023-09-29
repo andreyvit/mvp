@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/andreyvit/mvp/backoff"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
 	"github.com/andreyvit/mvp/mvprpc"
 )
 
@@ -99,6 +100,8 @@ func (scm *Schema) Define(kindName string, inOrFunc any, behavior Behavior, opts
 			kind.Behavior = opt
 		case backoff.Backoff:
 			kind.Backoff = opt
+		case mvpm.StoreAffinity:
+			kind.Method.StoreAffinity = opt
 		case WithRepeatInterval:
 			kind.RepeatInterval = time.Duration(opt)
 		case WithEnabled:
