@@ -40,7 +40,7 @@ func (c *FileUpload[T]) Process(data *FormData) {
 		file = files[0]
 	}
 
-	log.Printf("FileUpload.Process: name = %q, file = %v", c.FullName, file)
+	log.Printf("FileUpload.Process: name = %q", c.FullName)
 	if file == nil {
 		return
 	}
