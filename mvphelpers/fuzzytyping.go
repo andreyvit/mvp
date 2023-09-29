@@ -143,3 +143,14 @@ func FuzzyBool(value any) bool {
 	}
 	return true
 }
+
+// FuzzyHumanBool is similar to strconv.ParseBool, but recognizes more on/off.
+func FuzzyHumanBool(str string) (bool, error) {
+	switch str {
+	case "1", "t", "T", "true", "TRUE", "True", "on", "ON", "On", "y", "Y", "yes", "YES", "Yes":
+		return true, nil
+	case "0", "f", "F", "false", "FALSE", "False", "off", "OFF", "Off", "n", "N", "no", "NO", "No":
+		return false, nil
+	}
+	return false, fmt.Errorf("invalid bool value %q", str)
+}
