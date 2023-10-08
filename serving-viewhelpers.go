@@ -124,6 +124,7 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 	RegisterBuiltinUtilityViewHelpers(m)
 	m["c_link"] = app.renderLink
 	m["c_icon"] = app.renderIcon
+	m["c_image"] = app.renderIcon
 	m["c_func_button"] = app.renderFuncButton
 	m["eval"] = app.EvalTemplate
 	m["url_for"] = func(d *RenderData, name string, extras ...any) template.URL {
