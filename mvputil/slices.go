@@ -25,3 +25,11 @@ func FilterFunc[S ~[]E, E comparable](s S, f func(E) bool) S {
 	}
 	return s[:i]
 }
+
+func Prepend[S ~[]E, E any](s S, elems ...E) S {
+	ns, ne := len(s), len(elems)
+	result := make(S, ns+ne)
+	copy(result, s)
+	copy(result[ns:], elems)
+	return result
+}
