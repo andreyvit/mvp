@@ -56,6 +56,16 @@ func adaptMiddleware(f any) func(rc *RC) (any, error) {
 		return nil
 	case func(rc *RC) (any, error):
 		return f
+	case func(rc *RC) error:
+		return func(rc *RC) (any, error) {
+			err := f(rc)
+			return nil, err
+		}
+	case func(rc *RC):
+		return func(rc *RC) (any, error) {
+			f(rc)
+			return nil, nil
+		}
 	case func(w http.ResponseWriter, r *http.Request) bool:
 		return func(rc *RC) (any, error) {
 			if f(rc.RespWriter, rc.Request.Request) {
@@ -76,6 +86,24 @@ func adaptMiddleware(f any) func(rc *RC) (any, error) {
 						reflect.ValueOf(rcf.AnyFrom(rc)),
 					})
 					return out[0].Interface(), errFromAny(out[1].Interface())
+				}
+			}
+		} else if ft.NumIn() == 1 && ft.NumOut() == 1 && ft.Out(0) == errorType {
+			if rcf := BaseRC.FacetByPtrType(ft.In(0)); rcf != nil {
+				return func(rc *RC) (any, error) {
+					out := fv.Call([]reflect.Value{
+						reflect.ValueOf(rcf.AnyFrom(rc)),
+					})
+					return nil, errFromAny(out[0].Interface())
+				}
+			}
+		} else if ft.NumIn() == 1 && ft.NumOut() == 0 {
+			if rcf := BaseRC.FacetByPtrType(ft.In(0)); rcf != nil {
+				return func(rc *RC) (any, error) {
+					fv.Call([]reflect.Value{
+						reflect.ValueOf(rcf.AnyFrom(rc)),
+					})
+					return nil, nil
 				}
 			}
 		}
