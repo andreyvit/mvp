@@ -411,6 +411,39 @@ func WhatsappSendURL(body string, ua string) string {
 		return "https://api.whatsapp.com/send/?" + q.Encode()
 	}
 }
+func FacebookShareLinkURL(appID, link, redirectURL string, ua string) string {
+	q := url.Values{
+		"app_id":       {appID},
+		"link":         {link},
+		"redirect_uri": {redirectURL},
+	}
+	u := url.URL{
+		Scheme:   "https",
+		Host:     "www.facebook.com",
+		Path:     "/dialog/feed",
+		RawQuery: q.Encode(),
+	}
+	return u.String()
+}
+func FacebookMessengerSendLinkURL(appID, link, redirectURL string, ua string) string {
+	q := url.Values{
+		"app_id":       {appID},
+		"link":         {link},
+		"redirect_uri": {redirectURL},
+	}
+	u := url.URL{
+		Scheme:   "https",
+		Host:     "www.facebook.com",
+		Path:     "/dialog/send",
+		RawQuery: q.Encode(),
+	}
+	return u.String()
+}
+
+func IsFacebookUA(ua string) bool {
+	ua = strings.ToLower(ua)
+	return strings.Contains(ua, "facebookexternalhit") || strings.Contains(ua, "facebot") || strings.Contains(ua, "facebookcatalog")
+}
 
 func PlusToPercent20(s string) string {
 	return strings.ReplaceAll(s, "+", "%20")
