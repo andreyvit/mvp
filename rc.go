@@ -231,3 +231,11 @@ func (rc *RC) AppendLogPrefix(buf *bytes.Buffer) {
 }
 func (rc *RC) AppendLogSuffix(buf *bytes.Buffer) {
 }
+
+func (rc *RC) RouteName() string {
+	if rc.Route != nil {
+		return rc.Route.RouteName()
+	} else {
+		return "<unknown>"
+	}
+}
