@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/hotwired"
+	"github.com/andreyvit/mvp/mvputil"
 	"github.com/andreyvit/mvp/sse"
 )
 
@@ -16,6 +17,35 @@ type Redirect struct {
 	StatusCode int
 	Values     url.Values
 	RouteName  string
+	Flash      *Flash
+}
+
+func (redir *Redirect) EffectivePath() string {
+	if redir.Flash == nil && len(redir.Values) == 0 {
+		return redir.Path
+	}
+
+	u, err := url.Parse(redir.Path)
+	if err != nil {
+		panic(fmt.Errorf("invalid redirect URL: %q", redir.Path))
+	}
+
+	q := u.Query()
+	mvputil.CopyURLValues(q, redir.Values)
+	if redir.Flash != nil {
+		encodeFlash(q, redir.Flash)
+	}
+	u.RawQuery = q.Encode()
+
+	return u.String()
+}
+
+func (redir *Redirect) EffectiveStatusCode() int {
+	if redir.StatusCode == 0 {
+		return http.StatusSeeOther
+	} else {
+		return redir.StatusCode
+	}
 }
 
 // SameMethod uses 307 Temporary Redirect for this redirect.
@@ -34,6 +64,20 @@ func (redir *Redirect) SameMethod() *Redirect {
 // recommended.
 func (redir *Redirect) Permanent() *Redirect {
 	redir.StatusCode = http.StatusPermanentRedirect
+	return redir
+}
+
+func (redir *Redirect) WithValues(values url.Values) *Redirect {
+	if redir.Values == nil {
+		redir.Values = values
+	} else {
+		mvputil.CopyURLValues(redir.Values, values)
+	}
+	return redir
+}
+
+func (redir *Redirect) WithFlash(flash *Flash) *Redirect {
+	redir.Flash = flash
 	return redir
 }
 
@@ -99,15 +143,8 @@ func (app *App) writeResponse(rc *RC, output any, w http.ResponseWriter, r *http
 		}
 		w.Write(b)
 	case *Redirect:
-		path := output.Path
-		if len(output.Values) > 0 {
-			path = path + "?" + output.Values.Encode()
-		}
-		code := output.StatusCode
-		if code == 0 {
-			code = http.StatusSeeOther
-		}
-		http.Redirect(w, r, path, code)
+		path := output.EffectivePath()
+		http.Redirect(w, r, path, output.EffectiveStatusCode())
 	case DebugOutput:
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(output))
@@ -127,4 +164,7 @@ func (app *App) fillViewData(output *ViewData, rc *RC) {
 	output.baseRC = rc
 	output.App = app
 	output.Route = rc.Route
+	if output.Flash == nil {
+		output.Flash = rc.Flash
+	}
 }

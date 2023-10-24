@@ -15,6 +15,7 @@ var (
 type (
 	PathParamsMapStr map[string]string
 	PathParamsMapAny map[string]any
+	URLOption        = any
 )
 
 // URL generates a relative (default) or absolute URL based on a named route.
@@ -22,7 +23,7 @@ type (
 // to supply path parameters for the route.
 // Supply url.Values to add query parameters.
 // Supply Absolute flag to return an absolute URL.
-func (app *App) URL(name string, extras ...any) string {
+func (app *App) URL(name string, extras ...URLOption) string {
 	route := app.routesByName[name]
 	if route == nil {
 		panic(fmt.Errorf("route %s does not exist", name))
@@ -171,20 +172,6 @@ func (rc *RC) Redirect(name string, extras ...any) *Redirect {
 
 func (rc *RC) RedirectBack() *Redirect {
 	referer := rc.Request.Header.Get("Referer")
-	// log.Printf("Referer = %q", referer)
-	return &Redirect{Path: referer}
-}
-
-func (rc *RC) RedirectBackWith(values url.Values) *Redirect {
-	referer := rc.Request.Header.Get("Referer")
-	u, err := url.Parse(referer)
-	if err == nil {
-		q := u.Query()
-		for k, vv := range values {
-			q[k] = vv
-		}
-		u.RawQuery = q.Encode()
-	}
 	// log.Printf("Referer = %q", referer)
 	return &Redirect{Path: referer}
 }
