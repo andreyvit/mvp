@@ -39,10 +39,18 @@ type List[T any] struct {
 	Empty         Child
 	TopArea       func() Children
 	BottomArea    func() Children
+	ItemActions   map[string]func(item T, index int, action *ItemAction)
 
 	children  Children
 	items     []T
 	InnerHTML template.HTML
+}
+
+type ItemAction struct {
+	ItemName string
+	Key      string
+	Remove   bool
+	Save     bool
 }
 
 func (*List[T]) DefaultTemplate() string { return "list" }
@@ -86,7 +94,7 @@ func (list *List[T]) Finalize(state *State) {
 	if state.Data == nil {
 		items = existingItems
 	} else {
-		newItemNameSet := computeListItemNames(list.Identity.FullName, state.Data)
+		newItemNameSet, action := list.computeListItemNames(state.Data)
 		if debugLogList {
 			log.Printf("forms: %T: newItemNameSet = %v", list, maps.Keys(newItemNameSet))
 		}
@@ -94,6 +102,13 @@ func (list *List[T]) Finalize(state *State) {
 		items = make([]T, 0, len(existingItems)+10)
 		for i, item := range existingItems {
 			itemName := list.FullItemName(item, i)
+			if action != nil && action.ItemName == itemName {
+				list.ItemActions[action.Key](item, i, action)
+				if action.Remove {
+					delete(newItemNameSet, itemName)
+					continue
+				}
+			}
 			if _, found := newItemNameSet[itemName]; found {
 				items = append(items, item)
 				delete(newItemNameSet, itemName)
@@ -162,9 +177,12 @@ func (list *List[T]) Finalize(state *State) {
 	list.children = children
 }
 
-func computeListItemNames(fullListName string, data *FormData) map[string]struct{} {
+func (list *List[T]) computeListItemNames(data *FormData) (map[string]struct{}, *ItemAction) {
+	fullListName := list.Identity.FullName
 	result := make(map[string]struct{})
 	prefix := fullListName + "["
+	var action *ItemAction
+
 	for k := range data.Values {
 		if suffix, ok := strings.CutPrefix(k, prefix); ok {
 			if name, _, ok := strings.Cut(suffix, "]"); ok {
@@ -172,11 +190,22 @@ func computeListItemNames(fullListName string, data *FormData) map[string]struct
 				isRemoving := (data.Action == removeAction)
 				if !isRemoving {
 					result[name] = struct{}{}
+
+					for actionKey := range list.ItemActions {
+						if data.Action == JoinNames(fullListName, name, actionKey) {
+							action = &ItemAction{
+								ItemName: name,
+								Key:      actionKey,
+							}
+							break
+						}
+					}
 				}
+
 			}
 		}
 	}
-	return result
+	return result, action
 }
 
 func (list *List[T]) FullItemName(item T, index int) string {
