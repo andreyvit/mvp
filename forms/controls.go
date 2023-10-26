@@ -193,6 +193,8 @@ type Button struct {
 	Activated  bool
 	Title      string
 	Handler    func()
+
+	ConfirmationMessage string
 }
 
 func (Button) DefaultTemplate() string { return "control-button" }
