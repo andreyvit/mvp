@@ -67,6 +67,10 @@ func (redir *Redirect) Permanent() *Redirect {
 	return redir
 }
 
+func (redir *Redirect) WithValue(key, value string) *Redirect {
+	return redir.WithValues(url.Values{key: {value}})
+}
+
 func (redir *Redirect) WithValues(values url.Values) *Redirect {
 	if redir.Values == nil {
 		redir.Values = values
