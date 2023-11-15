@@ -1,9 +1,11 @@
 package mvphelpers
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"runtime/debug"
+	"strings"
 )
 
 func FuncMap() template.FuncMap {
@@ -13,7 +15,24 @@ func FuncMap() template.FuncMap {
 		"is_odd":       IsOdd,
 		"dict":         Dict,
 		"list":         List,
+		"subst":        Subst,
 	}
+}
+
+func Subst(str string, keysAndValues ...any) string {
+	n := len(keysAndValues)
+	if n%2 != 0 {
+		panic(fmt.Errorf("odd number of arguments %d: %v", n, keysAndValues))
+	}
+	for i := 0; i < n; i += 2 {
+		key, value := keysAndValues[i], keysAndValues[i+1]
+		if keyStr, ok := key.(string); ok {
+			str = strings.ReplaceAll(str, keyStr, Stringify(value))
+		} else {
+			panic(fmt.Errorf("argument %d must be a string, got %T: %v", i, key, key))
+		}
+	}
+	return str
 }
 
 // ExposeHelperPanic helps to debug panics inside view helpers.
@@ -74,4 +93,17 @@ func (group Group) PlaceholderCount() int {
 
 func (group Group) Placeholders() []struct{} {
 	return make([]struct{}, group.PlaceholderCount())
+}
+
+func Stringify(v any) string {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return v
+	case template.HTML:
+		return string(v)
+	default:
+		return fmt.Sprint(v)
+	}
 }

@@ -63,5 +63,5 @@ func (c *InputTime) Process(*FormData) {
 }
 
 func (c *InputTime) FormattedValue() string {
-	return c.Binding.Value.In(c.Location).Format(c.ValueFormat())
+	return c.Binding.Value().In(c.Location).Format(c.ValueFormat())
 }

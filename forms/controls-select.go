@@ -21,7 +21,7 @@ func (Select[T]) DefaultTemplate() string { return "control-select" }
 
 func (c *Select[T]) Finalize(state *State) {
 	if c.RawFormValue == "" {
-		opt := c.OptionByModelValue(c.Binding.Value)
+		opt := c.OptionByModelValue(c.Binding.Value())
 		if opt != nil {
 			c.RawFormValue = opt.HTMLValue
 		}

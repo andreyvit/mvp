@@ -18,8 +18,8 @@ type Field struct {
 	RawFormValuePresent bool
 }
 
-func (field *Field) EnumFields(f func(*Field)) {
-	f(field)
+func (field *Field) EnumFields(f func(name string, field *Field)) {
+	f("", field)
 }
 
 type Subst struct {
@@ -64,6 +64,16 @@ func (st *State) PushName(name string) {
 	if name != "" {
 		st.path = append(st.path, name)
 	}
+}
+
+func (st *State) PopName() {
+	st.path = st.path[:len(st.path)-1]
+}
+
+func (st *State) WithName(name string, f func()) {
+	st.PushName(name)
+	defer st.PopName()
+	f()
 }
 
 func (st *State) PushTemplate(forTempl, useTempl string) {
@@ -161,9 +171,21 @@ func (st *State) Fin() {
 	}
 }
 
-func (st *State) AddField(field *Field) {
+func (st *State) AddField(name string, field *Field) {
+	if name != "" {
+		st.PushName(name)
+	}
 	st.AssignIdentity(&field.Identity)
 	st.fields[field.FullName] = field
+	if name != "" {
+		st.PopName()
+	}
+}
+
+func (st *State) AssignSubidentity(name string, ident *Identity) {
+	st.PushName(name)
+	st.AssignIdentity(ident)
+	st.PopName()
 }
 
 func (st *State) AssignIdentity(ident *Identity) {

@@ -8,7 +8,9 @@ import (
 type FileUpload[T comparable] struct {
 	Template
 	TemplateStyle
-	Field
+	FileField Field
+	NameField Field
+	Reset     Identity
 	*Binding[T]
 
 	Required bool
@@ -17,11 +19,18 @@ type FileUpload[T comparable] struct {
 	ButtonTag   TagOpts
 
 	Handler func(file *multipart.FileHeader) (T, error)
+	Verify  func(raw string) (T, error)
 }
 
 func (FileUpload[T]) DefaultTemplate() string { return "control-file" }
 
+func (c *FileUpload[T]) EnumFields(f func(name string, field *Field)) {
+	f("", &c.FileField)
+	f("filename", &c.NameField)
+}
+
 func (c *FileUpload[T]) Finalize(state *State) {
+	state.AssignSubidentity("remove", &c.Reset)
 	c.Binding.Validate(func(value T) (T, error) {
 		if c.Required {
 			var zero T
@@ -34,13 +43,28 @@ func (c *FileUpload[T]) Finalize(state *State) {
 }
 
 func (c *FileUpload[T]) Process(data *FormData) {
-	files := data.Files[c.FullName]
+	if data.Action == c.Reset.FullName {
+		var zero T
+		c.Binding.Set(zero)
+	} else if c.NameField.RawFormValue == "" {
+		var zero T
+		c.Binding.Set(zero)
+	} else if c.NameField.RawFormValue != "" && c.Verify != nil {
+		v, err := c.Verify(c.NameField.RawFormValue)
+		if err != nil {
+			c.Binding.ErrSite.AddError(err)
+		} else {
+			c.Binding.Set(v)
+		}
+	}
+
+	files := data.Files[c.FileField.FullName]
 	var file *multipart.FileHeader
 	if len(files) > 0 {
 		file = files[0]
 	}
 
-	log.Printf("FileUpload.Process: name = %q", c.FullName)
+	// log.Printf("FileUpload.Process: name = %q", c.FileField.FullName)
 	if file == nil {
 		return
 	}

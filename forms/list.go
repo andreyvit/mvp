@@ -88,7 +88,7 @@ func (list *List[T]) Finalize(state *State) {
 		panic("need either RenderItem or RenderItemPtr")
 	}
 
-	existingItems := list.Binding.Value
+	existingItems := list.Binding.Value()
 
 	var items []T
 	if state.Data == nil {
@@ -230,7 +230,7 @@ func (list *List[T]) SplitFullItemName(fullName string) (name, typ string) {
 	}
 }
 
-func (*List[T]) EnumFields(f func(*Field)) {}
+func (*List[T]) EnumFields(f func(name string, field *Field)) {}
 
 func (list *List[T]) EnumChildren(f func(Child)) {
 	f(list.children)

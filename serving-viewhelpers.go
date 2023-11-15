@@ -86,6 +86,9 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 	m["gridsizef"] = func(base, size, gap, coord any) float64 {
 		return mvphelpers.FuzzyFloat64(base) + mvphelpers.FuzzyFloat64(size)*mvphelpers.FuzzyFloat64(coord) + mvphelpers.FuzzyFloat64(gap)*(mvphelpers.FuzzyFloat64(coord)-1)
 	}
+	m["div"] = func(a, b any) float64 {
+		return mvphelpers.FuzzyFloat64(a) / mvphelpers.FuzzyFloat64(b)
+	}
 	m["defined"] = func(cond any) bool {
 		return cond != nil
 	}

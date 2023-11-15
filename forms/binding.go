@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"golang.org/x/exp/slices"
 )
@@ -13,7 +14,7 @@ type AnyBinding interface {
 }
 
 type Binding[T any] struct {
-	Value      T
+	Getter     func() T
 	Setter     func(value T) error
 	Validators []Validator[T]
 	ErrSite    ErrorSite
@@ -24,7 +25,9 @@ type Validator[T any] func(value T) (T, error)
 
 func Var[T any](ptr *T) *Binding[T] {
 	return &Binding[T]{
-		Value: *ptr,
+		Getter: func() T {
+			return *ptr
+		},
 		Setter: func(value T) error {
 			*ptr = value
 			return nil
@@ -34,7 +37,9 @@ func Var[T any](ptr *T) *Binding[T] {
 
 func Const[T any](value T) *Binding[T] {
 	return &Binding[T]{
-		Value: value,
+		Getter: func() T {
+			return value
+		},
 		Setter: func(value T) error {
 			return nil
 		},
@@ -43,9 +48,12 @@ func Const[T any](value T) *Binding[T] {
 
 func BindField[T, S any](b *Binding[S], field func(src *S) *T) *Binding[T] {
 	return &Binding[T]{
-		Value: *field(&b.Value),
+		Getter: func() T {
+			value := b.Value()
+			return *field(&value)
+		},
 		Setter: func(source T) error {
-			value := b.Value
+			value := b.Value()
 			*field(&value) = source
 			b.Set(value)
 			return nil
@@ -72,16 +80,18 @@ func (b *Binding[T]) Init(errs ErrorSite) {
 	}
 }
 
+func (b *Binding[T]) Value() T {
+	return b.Getter()
+}
+
 func (b *Binding[T]) Set(value T) {
 	if b.ErrSite == nil {
 		panic("no err site for binding")
 	}
-	b.Value = value
 
 	for _, validator := range b.Validators {
 		var err error
 		value, err = validator(value)
-		b.Value = value
 		if err != nil {
 			b.ErrSite.AddError(err)
 			return
@@ -103,7 +113,9 @@ func (b *Binding[T]) AsString(stringer func(T) string, convert func(string) (T, 
 		}
 	}
 	return &Binding[string]{
-		Value: stringer(b.Value),
+		Getter: func() string {
+			return stringer(b.Value())
+		},
 		Setter: func(str string) error {
 			value, err := convert(str)
 			if err != nil {
@@ -118,7 +130,9 @@ func (b *Binding[T]) AsString(stringer func(T) string, convert func(string) (T, 
 
 func Convert[T, S any](b *Binding[S], stringer func(S) T, convert func(T) (S, error)) *Binding[T] {
 	return &Binding[T]{
-		Value: stringer(b.Value),
+		Getter: func() T {
+			return stringer(b.Value())
+		},
 		Setter: func(source T) error {
 			value, err := convert(source)
 			if err != nil {
@@ -129,6 +143,48 @@ func Convert[T, S any](b *Binding[S], stringer func(S) T, convert func(T) (S, er
 		},
 		ErrSite: b.ErrSite,
 		Child:   b,
+	}
+}
+
+func AnyCast[T any](b *Binding[any]) *Binding[T] {
+	return &Binding[T]{
+		Getter: func() T {
+			return valueAnyCast[T](b.Value())
+		},
+		Setter: func(source T) error {
+			b.Set(source)
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
+func AnyCastZeroToNil[T comparable](b *Binding[any]) *Binding[T] {
+	return &Binding[T]{
+		Getter: func() T {
+			return valueAnyCast[T](b.Value())
+		},
+		Setter: func(source T) error {
+			var zero T
+			if source == zero {
+				b.Set(nil)
+			} else {
+				b.Set(source)
+			}
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
+func valueAnyCast[T any](v any) T {
+	if v == nil {
+		var zero T
+		return zero
+	} else {
+		return v.(T)
 	}
 }
 
@@ -200,18 +256,21 @@ func Int64AsString(b *Binding[int64], opts ...any) *Binding[string] {
 
 func BindSliceContainsEl[T comparable](b *Binding[[]T], el T) *Binding[bool] {
 	return &Binding[bool]{
-		Value: slices.Contains(b.Value, el),
+		Getter: func() bool {
+			return slices.Contains(b.Value(), el)
+		},
 		Setter: func(source bool) error {
-			i := slices.Index(b.Value, el)
+			value := b.Value()
+			i := slices.Index(value, el)
 			if i < 0 {
 				if source {
-					items := slices.Clone(b.Value)
+					items := slices.Clone(value)
 					items = append(items, el)
 					b.Set(items)
 				}
 			} else {
 				if !source {
-					items := slices.Clone(b.Value)
+					items := slices.Clone(value)
 					items = slices.Delete(items, i, i+1)
 					b.Set(items)
 				}
@@ -224,15 +283,15 @@ func BindSliceContainsEl[T comparable](b *Binding[[]T], el T) *Binding[bool] {
 }
 
 func BindSliceEmptyOrSingle[T comparable](b *Binding[[]T], emptyValue T) *Binding[T] {
-	var value T
-	if len(b.Value) == 0 {
-		value = emptyValue
-	} else {
-		value = b.Value[0]
-	}
-
 	return &Binding[T]{
-		Value: value,
+		Getter: func() T {
+			value := b.Value()
+			if len(value) == 0 {
+				return emptyValue
+			} else {
+				return value[0]
+			}
+		},
 		Setter: func(source T) error {
 			if source == emptyValue {
 				b.Set(nil)
@@ -246,9 +305,41 @@ func BindSliceEmptyOrSingle[T comparable](b *Binding[[]T], emptyValue T) *Bindin
 	}
 }
 
+func ConvertStringFields(b *Binding[[]string], sep rune) *Binding[string] {
+	formatSep := string(sep)
+	var fieldFunc func(rune) bool
+	if sep != ' ' {
+		formatSep = formatSep + " "
+		fieldFunc = func(r rune) bool { return r == sep }
+	}
+	return &Binding[string]{
+		Getter: func() string {
+			value := b.Value()
+			return strings.Join(value, formatSep)
+		},
+		Setter: func(source string) error {
+			var items []string
+			if sep == ' ' {
+				items = strings.Fields(source)
+			} else {
+				items = strings.FieldsFunc(source, fieldFunc)
+			}
+			for i, item := range items {
+				items[i] = strings.TrimSpace(item)
+			}
+			b.Set(items)
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
 func BindMapKey[T any, K comparable](m map[K]T, key K) *Binding[T] {
 	return &Binding[T]{
-		Value: m[key],
+		Getter: func() T {
+			return m[key]
+		},
 		Setter: func(value T) error {
 			m[key] = value
 			return nil
@@ -258,7 +349,9 @@ func BindMapKey[T any, K comparable](m map[K]T, key K) *Binding[T] {
 
 func BindMapKeyDeletingZeros[T comparable, K comparable](m map[K]T, key K) *Binding[T] {
 	return &Binding[T]{
-		Value: m[key],
+		Getter: func() T {
+			return m[key]
+		},
 		Setter: func(value T) error {
 			var zero T
 			if value == zero {
@@ -273,7 +366,9 @@ func BindMapKeyDeletingZeros[T comparable, K comparable](m map[K]T, key K) *Bind
 
 func BindNot(b *Binding[bool]) *Binding[bool] {
 	return &Binding[bool]{
-		Value: !b.Value,
+		Getter: func() bool {
+			return !b.Value()
+		},
 		Setter: func(source bool) error {
 			b.Set(!source)
 			return nil

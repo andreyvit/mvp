@@ -49,7 +49,7 @@ type Container interface {
 
 type Processor interface {
 	Child
-	EnumFields(f func(*Field))
+	EnumFields(f func(name string, field *Field))
 	EnumBindings(f func(AnyBinding))
 	Process(data *FormData)
 }
@@ -62,6 +62,10 @@ type FormData struct {
 	Action string
 	Values url.Values
 	Files  map[string][]*multipart.FileHeader
+}
+
+type Updatable interface {
+	TriggerUpdate()
 }
 
 func walk(child Child, pre func(Child), post func(Child)) {
@@ -176,15 +180,35 @@ type Group struct {
 	TemplateStyle
 	Options  any
 	Children Children
+	Specials map[string]Child
 	MultiErrorSite
 
 	wrapperForm any
 
-	InnerHTML template.HTML
+	InnerHTML   template.HTML
+	SpecialHTML map[string]template.HTML
 }
 
 func (group *Group) AddChild(children ...Child) {
 	group.Children.Add(children...)
+}
+
+func (group *Group) AddSpecial(key string, children ...Child) {
+	if group.Specials == nil {
+		group.Specials = make(map[string]Child)
+	}
+	group.Specials[key] = AsChild(children...)
+}
+
+func AsChild(children ...Child) Child {
+	switch len(children) {
+	case 0:
+		return nil
+	case 1:
+		return children[0]
+	default:
+		return Children(children)
+	}
 }
 
 func (group *Group) EnumChildren(f func(Child)) {
@@ -206,6 +230,12 @@ func (group *Group) Finalize(state *State) {
 
 func (group *Group) RenderInto(buf *strings.Builder, r *Renderer) {
 	group.InnerHTML = r.Render(group.Children)
+	for key, child := range group.Specials {
+		if group.SpecialHTML == nil {
+			group.SpecialHTML = make(map[string]template.HTML)
+		}
+		group.SpecialHTML[key] = r.Render(child)
+	}
 	if group.wrapperForm != nil {
 		r.RenderWrapperTemplateInto(buf, group.Template, group.wrapperForm, group.InnerHTML)
 	} else {

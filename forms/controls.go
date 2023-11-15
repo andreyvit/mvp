@@ -214,7 +214,7 @@ func (c *Button) Finalize(state *State) {
 	}
 }
 
-func (c *Button) EnumFields(f func(*Field)) {
+func (c *Button) EnumFields(f func(name string, field *Field)) {
 }
 
 func (c *Button) EnumBindings(f func(AnyBinding)) {

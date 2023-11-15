@@ -23,23 +23,37 @@ type Image struct {
 	Template
 	TemplateStyle
 	TagOpts
-	Src string
+	Src    string
+	Update func(el *Image)
 }
 
-func (Image) DefaultTemplate() string { return "embed-image" }
+func (*Image) DefaultTemplate() string { return "embed-image" }
 
-func (Image) Finalize(state *State) {}
+func (*Image) Finalize(state *State) {}
+
+func (el *Image) TriggerUpdate() {
+	if el.Update != nil {
+		el.Update(el)
+	}
+}
 
 type Text struct {
 	Template
 	TemplateStyle
 	TagOpts
-	Text string
+	Text   string
+	Update func(el *Text)
 }
 
 func (Text) DefaultTemplate() string { return "embed-text" }
 
 func (Text) Finalize(state *State) {}
+
+func (el *Text) TriggerUpdate() {
+	if el.Update != nil {
+		el.Update(el)
+	}
+}
 
 type HTMLFragment struct {
 	Template

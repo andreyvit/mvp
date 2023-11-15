@@ -27,6 +27,9 @@ func (r *Renderer) RenderWrapperTemplateInto(buf *strings.Builder, templ string,
 }
 
 func (r *Renderer) RenderInto(buf *strings.Builder, item any) {
+	if upd, ok := item.(Updatable); ok {
+		upd.TriggerUpdate()
+	}
 	if c, ok := item.(Renderable); ok {
 		c.RenderInto(buf, r)
 	} else if t, ok := item.(Templated); ok {
