@@ -3,6 +3,8 @@ package mvphelpers
 import (
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -125,6 +127,14 @@ func FuzzyFloat64(v any) float64 {
 		return float64(v)
 	case float64:
 		return float64(v)
+	case string:
+		if str, ok := strings.CutSuffix(v, "px"); ok {
+			v, err := strconv.ParseFloat(str, 64)
+			if err != nil {
+				panic(fmt.Errorf("expected a number, got %T %v", v, v))
+			}
+			return v
+		}
 	}
 
 	vv := reflect.ValueOf(v)
@@ -135,7 +145,7 @@ func FuzzyFloat64(v any) float64 {
 	} else if vv.CanUint() {
 		return float64(vv.Uint())
 	}
-	panic(fmt.Errorf("expected an integer, got %T %v", v, v))
+	panic(fmt.Errorf("expected a number, got %T %v", v, v))
 }
 
 func FuzzyBool(value any) bool {
