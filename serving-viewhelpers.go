@@ -365,6 +365,8 @@ func Attr(name string, value any) template.HTMLAttr {
 
 func AttrsSwitch(attrs any) template.HTMLAttr {
 	switch attrs := attrs.(type) {
+	case nil:
+		return ""
 	case map[string]string:
 		return Attrs(attrs)
 	case map[string]any:
