@@ -11,6 +11,18 @@ import (
 	"github.com/uptrace/bunrouter"
 )
 
+var formConfig = &httpform.Configuration{
+	AllowJSON:      true,
+	AllowForm:      true,
+	AllowMultipart: true,
+
+	JSONBodyFallbackParam: "_body",
+
+	MaxMultipartMemory: 32 * httpform.MB, // matches http.defaultMaxMemory
+
+	DisallowUnknownFields: false,
+}
+
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	domain := mvputil.TrimPort(r.Host)
 	d := app.domainRouter.find(domain)
@@ -65,7 +77,7 @@ func (app *App) callRoute(route *Route, rc *RC, w http.ResponseWriter, req bunro
 	}
 
 	inVal := reflect.New(route.inType)
-	err := httpform.Default.DecodeVal(req.Request, req.Params(), inVal)
+	err := formConfig.DecodeVal(req.Request, req.Params(), inVal)
 	if err != nil {
 		return err
 	}
