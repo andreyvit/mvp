@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	debugLogList = true
+	debugLogList = false
 )
 
 type List[T any] struct {

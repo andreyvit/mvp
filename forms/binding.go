@@ -2,7 +2,6 @@ package forms
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -102,7 +101,7 @@ func (b *Binding[T]) Set(value T) {
 	if err != nil {
 		b.ErrSite.AddError(err)
 	} else {
-		log.Printf("Binding value set: %T %v", value, value)
+		// log.Printf("Binding value set: %T %v", value, value)
 	}
 }
 
