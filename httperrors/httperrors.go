@@ -303,12 +303,17 @@ func (err *Error) String() string {
 	return buf.String()
 }
 
-func HTTPMessage(err Error) string {
-	if m := err.PublicError(); m != "" {
-		return m
-	} else {
-		return http.StatusText(err.HTTPCode())
+func HTTPMessage(err error) string {
+	if err == nil {
+		return ""
 	}
+	if e, ok := err.(interface{ PublicError() string }); ok {
+		str := e.PublicError()
+		if str != "" {
+			return str
+		}
+	}
+	return http.StatusText(HTTPCode(err))
 }
 
 func ErrorID(err error) string {
