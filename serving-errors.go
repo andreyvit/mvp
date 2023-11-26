@@ -3,9 +3,23 @@ package mvp
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/httperrors"
 )
+
+func WritePlainError(w http.ResponseWriter, err error) {
+	code := httperrors.HTTPCode(err)
+	message := httperrors.HTTPMessage(err)
+	DisableCaching(w)
+	http.Error(w, message, code)
+}
+
+func WriteMethodNotAllowed(w http.ResponseWriter) {
+	DisableCaching(w)
+	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+}
 
 type clientNetworkingError struct {
 	Cause error
