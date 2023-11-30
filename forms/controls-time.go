@@ -18,6 +18,10 @@ type InputTime struct {
 	Location    *time.Location
 }
 
+const (
+	DateTimeLocalInputTimeFormat = "2006-01-02T15:04"
+)
+
 func (InputTime) DefaultTemplate() string { return "control-datetime-date" }
 
 func (c *InputTime) InputType() string {
@@ -30,7 +34,7 @@ func (c *InputTime) InputType() string {
 
 func (c *InputTime) ValueFormat() string {
 	if c.IncludeTime {
-		return "2006-01-02T15:04"
+		return DateTimeLocalInputTimeFormat
 	} else {
 		return time.DateOnly
 	}
