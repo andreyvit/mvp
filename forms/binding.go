@@ -346,6 +346,22 @@ func BindMapKey[T any, K comparable](m map[K]T, key K) *Binding[T] {
 	}
 }
 
+func BindMapKeyWithDefault[T any, K comparable](m map[K]T, key K, defaultValue T) *Binding[T] {
+	return &Binding[T]{
+		Getter: func() T {
+			value, ok := m[key]
+			if !ok {
+				return defaultValue
+			}
+			return value
+		},
+		Setter: func(value T) error {
+			m[key] = value
+			return nil
+		},
+	}
+}
+
 func BindMapKeyDeletingZeros[T comparable, K comparable](m map[K]T, key K) *Binding[T] {
 	return &Binding[T]{
 		Getter: func() T {
