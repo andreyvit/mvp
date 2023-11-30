@@ -174,10 +174,12 @@ const (
 	seqBits               = 16
 	nodeShift             = seqBits
 	timeShift             = (nodeBits + seqBits)
-	timeMask       uint64 = (2 << timeBits) - 1
-	nodeMask       uint64 = (2 << nodeBits) - 1
-	seqMask        uint64 = (2 << seqBits) - 1
-	nodeAndSeqMask uint64 = (2 << (nodeBits + seqBits)) - 1
+	timeMask       uint64 = (1 << timeBits) - 1
+	nodeMask       uint64 = (1 << nodeBits) - 1
+	seqMask        uint64 = (1 << seqBits) - 1
+	nodeAndSeqMask uint64 = (1 << (nodeBits + seqBits)) - 1
+	MaxNode        uint64 = nodeMask
+	MaxSeq         uint64 = seqMask
 )
 
 func MinAt(tm time.Time) ID {
