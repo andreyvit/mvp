@@ -15,7 +15,7 @@ var (
 	debugLogList = false
 )
 
-type List[T any] struct {
+type List[T comparable] struct {
 	Name     string
 	Template string
 	TemplateStyle
@@ -41,9 +41,10 @@ type List[T any] struct {
 	BottomArea    func() Children
 	ItemActions   map[string]func(item T, index int, action *ItemAction)
 
-	children  Children
-	items     []T
-	InnerHTML template.HTML
+	children   Children
+	childFlags []ChildFlags
+	items      []T
+	InnerHTML  template.HTML
 }
 
 type ItemAction struct {
@@ -91,6 +92,7 @@ func (list *List[T]) Finalize(state *State) {
 	existingItems := list.Binding.Value()
 
 	var items []T
+	newlyAddedItems := make(map[T]struct{})
 	if state.Data == nil {
 		items = existingItems
 	} else {
@@ -140,6 +142,7 @@ func (list *List[T]) Finalize(state *State) {
 			if state.Data.Action == addName {
 				if item, ok := list.NewItem("", "", len(items)); ok {
 					items = append(items, item)
+					newlyAddedItems[item] = struct{}{}
 				}
 			} else if suffix, ok := strings.CutPrefix(state.Data.Action, addName); ok {
 				comps := SplitName(suffix)
@@ -147,6 +150,7 @@ func (list *List[T]) Finalize(state *State) {
 					typ := comps[0]
 					if item, ok := list.NewItem("", typ, len(items)); ok {
 						items = append(items, item)
+						newlyAddedItems[item] = struct{}{}
 					}
 				}
 			}
@@ -158,8 +162,12 @@ func (list *List[T]) Finalize(state *State) {
 	list.items = items
 
 	children := make(Children, 0, len(items)+10)
+	childFlags := make([]ChildFlags, 0, len(items)+10)
 	if list.TopArea != nil {
-		children = append(children, list.TopArea()...)
+		for _, child := range list.TopArea() {
+			children = append(children, child)
+			childFlags = append(childFlags, 0)
+		}
 	}
 	for i, item := range items {
 		var group *Group
@@ -169,12 +177,21 @@ func (list *List[T]) Finalize(state *State) {
 			group = list.RenderItemPtr(&items[i], i)
 		}
 		group.Name = list.FullItemName(item, i)
+		var flags ChildFlags
+		if _, found := newlyAddedItems[item]; found {
+			flags = ChildFlagSkipProcessing
+		}
 		children = append(children, group)
+		childFlags = append(childFlags, flags)
 	}
 	if list.BottomArea != nil {
-		children = append(children, list.BottomArea()...)
+		for _, child := range list.BottomArea() {
+			children = append(children, child)
+			childFlags = append(childFlags, 0)
+		}
 	}
 	list.children = children
+	list.childFlags = childFlags
 }
 
 func (list *List[T]) computeListItemNames(data *FormData) (map[string]struct{}, *ItemAction) {
@@ -232,8 +249,14 @@ func (list *List[T]) SplitFullItemName(fullName string) (name, typ string) {
 
 func (*List[T]) EnumFields(f func(name string, field *Field)) {}
 
-func (list *List[T]) EnumChildren(f func(Child)) {
-	f(list.children)
+func (list *List[T]) EnumChildren(f func(Child, ChildFlags)) {
+	for i, child := range list.children {
+		f(child, list.childFlags[i])
+	}
+}
+
+func (list *List[T]) ShouldProcessChild(data *FormData, child Child) bool {
+	return false
 }
 
 func (list *List[T]) Process(fd *FormData) {

@@ -12,6 +12,12 @@ type Child interface {
 	Finalize(state *State)
 }
 
+type ChildFlags uint64
+
+const (
+	ChildFlagSkipProcessing ChildFlags = 1 << iota
+)
+
 type Children []Child
 
 func (cc *Children) Add(c ...Child) {
@@ -24,9 +30,9 @@ func (cc *Children) Add(c ...Child) {
 func (cc Children) Finalize(state *State) {
 }
 
-func (cc Children) EnumChildren(f func(Child)) {
+func (cc Children) EnumChildren(f func(Child, ChildFlags)) {
 	for _, c := range cc {
-		f(c)
+		f(c, 0)
 	}
 }
 
@@ -44,7 +50,7 @@ type Renderable interface {
 
 type Container interface {
 	Child
-	EnumChildren(f func(Child))
+	EnumChildren(f func(Child, ChildFlags))
 }
 
 type Processor interface {
@@ -68,7 +74,7 @@ type Updatable interface {
 	TriggerUpdate()
 }
 
-func walk(child Child, pre func(Child), post func(Child)) {
+func walk(child Child, skipFlags ChildFlags, pre func(Child), post func(Child)) {
 	if child == nil {
 		return
 	}
@@ -76,8 +82,11 @@ func walk(child Child, pre func(Child), post func(Child)) {
 		pre(child)
 	}
 	if cntr, ok := child.(Container); ok {
-		cntr.EnumChildren(func(c Child) {
-			walk(c, pre, post)
+		cntr.EnumChildren(func(c Child, flags ChildFlags) {
+			if (flags & skipFlags) != 0 {
+				return
+			}
+			walk(c, skipFlags, pre, post)
 		})
 	}
 	if post != nil {
@@ -139,7 +148,7 @@ func (form *Form) Process(data *FormData) bool {
 			field.RawFormValuePresent = true
 		}
 	}
-	walk(&form.Group, func(c Child) {
+	walk(&form.Group, ChildFlagSkipProcessing, func(c Child) {
 		if p, ok := c.(PreProcessor); ok {
 			p.PreProcess(data)
 		}
@@ -166,7 +175,7 @@ func (form *Form) finalize(data *FormData) {
 	}
 	state.classes = append(state.classes, nil)
 	form.Group.wrapperForm = form
-	state.finalizeTree(&form.Group)
+	state.finalizeTree(&form.Group, 0)
 	form.fields = state.fields
 	state.Fin()
 }
@@ -211,8 +220,8 @@ func AsChild(children ...Child) Child {
 	}
 }
 
-func (group *Group) EnumChildren(f func(Child)) {
-	f(group.Children)
+func (group *Group) EnumChildren(f func(Child, ChildFlags)) {
+	f(group.Children, 0)
 }
 
 func (group *Group) Finalize(state *State) {
@@ -273,9 +282,9 @@ func (item *Item) Finalize(state *State) {
 	state.AssignIdentity(&item.Identity)
 }
 
-func (item *Item) EnumChildren(f func(Child)) {
-	f(item.Child)
-	f(item.Extra)
+func (item *Item) EnumChildren(f func(Child, ChildFlags)) {
+	f(item.Child, 0)
+	f(item.Extra, 0)
 }
 
 func (item *Item) RenderInto(buf *strings.Builder, r *Renderer) {
@@ -297,8 +306,8 @@ type Wrapper struct {
 func (wrapper *Wrapper) Finalize(state *State) {
 }
 
-func (wrapper *Wrapper) EnumChildren(f func(Child)) {
-	f(wrapper.Child)
+func (wrapper *Wrapper) EnumChildren(f func(Child, ChildFlags)) {
+	f(wrapper.Child, 0)
 }
 
 func (wrapper *Wrapper) RenderInto(buf *strings.Builder, r *Renderer) {

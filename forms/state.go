@@ -197,7 +197,7 @@ func (st *State) AssignIdentity(ident *Identity) {
 	}
 }
 
-func (st *State) finalizeTree(c Child) {
+func (st *State) finalizeTree(c Child, flags ChildFlags) {
 	if c == nil {
 		return
 	}
