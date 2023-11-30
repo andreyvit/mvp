@@ -227,3 +227,19 @@ func (c *Button) Process(fd *FormData) {
 		c.Handler()
 	}
 }
+
+type Hidden struct {
+	Template
+	TemplateStyle
+	Field
+	TagOpts
+	*Binding[string]
+}
+
+func (Hidden) DefaultTemplate() string { return "control-hidden" }
+
+func (c *Hidden) Finalize(state *State) {}
+
+func (c *Hidden) Process(*FormData) {
+	c.Binding.Set(c.RawFormValue)
+}
