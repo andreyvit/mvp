@@ -18,6 +18,10 @@ func IsTurbo(r *http.Request) bool {
 	return strings.Contains(r.Header.Get("Accept"), StreamContentType)
 }
 
+func TurboFrameName(r *http.Request) string {
+	return r.Header.Get("Turbo-Frame")
+}
+
 type Stream struct {
 	Buffer bytes.Buffer
 }
