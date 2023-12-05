@@ -102,7 +102,9 @@ func (c *InputInt) Finalize(state *State) {
 }
 
 func (c *InputInt) Process(*FormData) {
-	c.Binding.SetString(c.RawFormValue, parseInt)
+	if c.RawFormValue != "" {
+		c.Binding.SetString(c.RawFormValue, parseInt)
+	}
 }
 
 type InputInt64 struct {
@@ -141,7 +143,9 @@ func (c *InputInt64) Finalize(state *State) {
 }
 
 func (c *InputInt64) Process(*FormData) {
-	c.Binding.SetString(c.RawFormValue, parseInt64)
+	if c.RawFormValue != "" {
+		c.Binding.SetString(c.RawFormValue, parseInt64)
+	}
 }
 
 type InputFloat64 struct {
@@ -180,7 +184,9 @@ func (c *InputFloat64) Finalize(state *State) {
 }
 
 func (c *InputFloat64) Process(*FormData) {
-	c.Binding.SetString(c.RawFormValue, parseFloat64)
+	if c.RawFormValue != "" {
+		c.Binding.SetString(c.RawFormValue, parseFloat64)
+	}
 }
 
 type SpecialValue[T comparable] struct {
