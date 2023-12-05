@@ -6,6 +6,7 @@ import (
 )
 
 type InputTime struct {
+	RenderableImpl[InputTime]
 	Template
 	TemplateStyle
 	Field

@@ -6,6 +6,7 @@ import (
 )
 
 type Checkbox struct {
+	RenderableImpl[Checkbox]
 	Template
 	TemplateStyle
 	Field
@@ -30,6 +31,7 @@ type InputWellOpts struct {
 }
 
 type InputText struct {
+	RenderableImpl[InputText]
 	Template
 	TemplateStyle
 	Field
@@ -65,6 +67,7 @@ func (c *InputText) Process(*FormData) {
 }
 
 type InputInt struct {
+	RenderableImpl[InputInt]
 	Template
 	TemplateStyle
 	Field
@@ -103,6 +106,7 @@ func (c *InputInt) Process(*FormData) {
 }
 
 type InputInt64 struct {
+	RenderableImpl[InputInt64]
 	Template
 	TemplateStyle
 	Field
@@ -141,6 +145,7 @@ func (c *InputInt64) Process(*FormData) {
 }
 
 type InputFloat64 struct {
+	RenderableImpl[InputFloat64]
 	Template
 	TemplateStyle
 	Field
@@ -184,6 +189,7 @@ type SpecialValue[T comparable] struct {
 }
 
 type Button struct {
+	RenderableImpl[Button]
 	Template
 	TemplateStyle
 	Identity
@@ -229,6 +235,7 @@ func (c *Button) Process(fd *FormData) {
 }
 
 type Hidden struct {
+	RenderableImpl[Hidden]
 	Template
 	TemplateStyle
 	Field

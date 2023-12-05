@@ -6,6 +6,7 @@ import (
 )
 
 type FileUpload[T comparable] struct {
+	RenderableImpl[FileUpload[T]]
 	Template
 	TemplateStyle
 	FileField Field

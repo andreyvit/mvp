@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"unsafe"
 )
 
 type Child interface {
@@ -18,6 +19,10 @@ const (
 	ChildFlagSkipProcessing ChildFlags = 1 << iota
 )
 
+type ChildAdder interface {
+	AddChild(c ...Child)
+}
+
 type Children []Child
 
 func (cc *Children) Add(c ...Child) {
@@ -25,6 +30,14 @@ func (cc *Children) Add(c ...Child) {
 		return
 	}
 	*cc = append(*cc, c...)
+}
+func (cc *Children) AddChild(c ...Child) {
+	cc.Add(c...)
+}
+
+func Add[T Child](container ChildAdder, child T) T {
+	container.AddChild(child)
+	return child
 }
 
 func (cc Children) Finalize(state *State) {
@@ -36,15 +49,53 @@ func (cc Children) EnumChildren(f func(Child, ChildFlags)) {
 	}
 }
 
-type Templated interface {
+type RenderableImpl[T any] struct {
+	IsHidden       bool
+	updater        func(*T)
+	visibilityFunc func() bool
+}
+
+func (impl *RenderableImpl[T]) owner() *T {
+	return (*T)(unsafe.Pointer(impl))
+}
+
+func (impl *RenderableImpl[T]) BeforeRender() {
+	if impl.visibilityFunc != nil {
+		impl.IsHidden = !impl.visibilityFunc()
+	}
+	if impl.updater != nil {
+		impl.updater(impl.owner())
+	}
+}
+
+func (impl *RenderableImpl[T]) IsRenderableVisible() bool {
+	return !impl.IsHidden
+}
+
+func (impl *RenderableImpl[T]) WithUpdater(f func(*T)) *T {
+	impl.updater = f
+	return impl.owner()
+}
+func (impl *RenderableImpl[T]) WithVisibility(f func() bool) *T {
+	impl.visibilityFunc = f
+	return impl.owner()
+}
+
+type Renderable interface {
 	Child
+	BeforeRender()
+	IsRenderableVisible() bool
+}
+
+type Templated interface {
+	Renderable
 	TemplateStylePtr() *TemplateStyle
 	CurrentTemplate() string
 	DefaultTemplate() string
 }
 
-type Renderable interface {
-	Child
+type CustomRenderable interface {
+	Renderable
 	RenderInto(buf *strings.Builder, r *Renderer)
 }
 
@@ -68,10 +119,6 @@ type FormData struct {
 	Action string
 	Values url.Values
 	Files  map[string][]*multipart.FileHeader
-}
-
-type Updatable interface {
-	TriggerUpdate()
 }
 
 func walk(child Child, skipFlags ChildFlags, pre func(Child), post func(Child)) {
@@ -181,6 +228,7 @@ func (form *Form) finalize(data *FormData) {
 }
 
 type Group struct {
+	RenderableImpl[Group]
 	Name       string
 	Title      string
 	WrapperTag TagOpts
@@ -253,6 +301,7 @@ func (group *Group) RenderInto(buf *strings.Builder, r *Renderer) {
 }
 
 type Item struct {
+	RenderableImpl[Item]
 	Name string
 	Identity
 
@@ -296,6 +345,7 @@ func (item *Item) RenderInto(buf *strings.Builder, r *Renderer) {
 }
 
 type Wrapper struct {
+	RenderableImpl[Wrapper]
 	WrapperTag TagOpts
 	Template   string
 	TemplateStyle

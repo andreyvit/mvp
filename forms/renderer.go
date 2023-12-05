@@ -26,11 +26,14 @@ func (r *Renderer) RenderWrapperTemplateInto(buf *strings.Builder, templ string,
 	}
 }
 
-func (r *Renderer) RenderInto(buf *strings.Builder, item any) {
-	if upd, ok := item.(Updatable); ok {
-		upd.TriggerUpdate()
+func (r *Renderer) RenderItemInto(buf *strings.Builder, item any) {
+	if upd, ok := item.(Renderable); ok {
+		upd.BeforeRender()
+		if !upd.IsRenderableVisible() {
+			return
+		}
 	}
-	if c, ok := item.(Renderable); ok {
+	if c, ok := item.(CustomRenderable); ok {
 		c.RenderInto(buf, r)
 	} else if t, ok := item.(Templated); ok {
 		// log.Printf("rendering templated %T %v", t, t)
@@ -39,10 +42,10 @@ func (r *Renderer) RenderInto(buf *strings.Builder, item any) {
 			templ = t.DefaultTemplate()
 		}
 		r.RenderTemplateInto(buf, templ, t)
-	} else if subitems, ok := item.(Children); ok {
-		for _, subitem := range subitems {
-			r.RenderInto(buf, subitem)
-		}
+	} else if container, ok := item.(Container); ok {
+		container.EnumChildren(func(c Child, cf ChildFlags) {
+			r.RenderItemInto(buf, c)
+		})
 	} else if s, ok := item.(string); ok {
 		buf.WriteString(template.HTMLEscapeString(s))
 	} else if h, ok := item.(template.HTML); ok {
@@ -55,6 +58,6 @@ func (r *Renderer) RenderInto(buf *strings.Builder, item any) {
 
 func (r *Renderer) Render(item any) template.HTML {
 	var buf strings.Builder
-	r.RenderInto(&buf, item)
+	r.RenderItemInto(&buf, item)
 	return template.HTML(buf.String())
 }

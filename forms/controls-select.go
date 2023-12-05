@@ -1,14 +1,16 @@
 package forms
 
 type Select[T comparable] struct {
+	RenderableImpl[Select[T]]
 	Template
 	TemplateStyle
 	Field
 	TagOpts
 	*Binding[T]
 
-	Required bool
-	Options  []*Option[T]
+	Required           bool
+	UpdateFormOnChange bool
+	Options            []*Option[T]
 }
 
 type Option[T comparable] struct {

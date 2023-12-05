@@ -9,6 +9,7 @@ func (t Template) CurrentTemplate() string {
 }
 
 type Header struct {
+	RenderableImpl[Header]
 	Template
 	TemplateStyle
 	TagOpts
@@ -20,24 +21,19 @@ func (Header) DefaultTemplate() string { return "embed-header" }
 func (Header) Finalize(state *State) {}
 
 type Image struct {
+	RenderableImpl[Image]
 	Template
 	TemplateStyle
 	TagOpts
-	Src    string
-	Update func(el *Image)
+	Src string
 }
 
 func (*Image) DefaultTemplate() string { return "embed-image" }
 
 func (*Image) Finalize(state *State) {}
 
-func (el *Image) TriggerUpdate() {
-	if el.Update != nil {
-		el.Update(el)
-	}
-}
-
 type Text struct {
+	RenderableImpl[Text]
 	Template
 	TemplateStyle
 	TagOpts
@@ -56,6 +52,7 @@ func (el *Text) TriggerUpdate() {
 }
 
 type HTMLFragment struct {
+	RenderableImpl[HTMLFragment]
 	Template
 	TemplateStyle
 	TagOpts
@@ -67,6 +64,7 @@ func (HTMLFragment) DefaultTemplate() string { return "embed-text" }
 func (HTMLFragment) Finalize(state *State) {}
 
 type Link struct {
+	RenderableImpl[Link]
 	Template
 	TemplateStyle
 	TagOpts
@@ -79,6 +77,7 @@ func (Link) DefaultTemplate() string { return "embed-link-a" }
 func (Link) Finalize(state *State) {}
 
 type FreeButton struct {
+	RenderableImpl[FreeButton]
 	Template
 	TemplateStyle
 	Field

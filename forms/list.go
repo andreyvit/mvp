@@ -16,6 +16,7 @@ var (
 )
 
 type List[T comparable] struct {
+	RenderableImpl[List[T]]
 	Name     string
 	Template string
 	TemplateStyle
