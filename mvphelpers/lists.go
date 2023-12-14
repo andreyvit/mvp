@@ -13,7 +13,7 @@ func List(v ...any) []any {
 func Dict(args ...any) map[string]any {
 	n := len(args)
 	m := make(map[string]any, n/2)
-	for i := 0; i < n; i += 2 {
+	for i := 0; i < n; i++ {
 		switch arg := args[i].(type) {
 		case string:
 			if i+1 >= n {
