@@ -61,6 +61,10 @@ type Interface interface {
 	ForeachExtra(f func(k string, v interface{}))
 }
 
+type PublicMessenger interface {
+	PublicError() string
+}
+
 type BaseError struct {
 	id         string
 	statusCode int
