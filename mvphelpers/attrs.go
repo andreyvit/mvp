@@ -2,10 +2,15 @@ package mvphelpers
 
 import (
 	"html/template"
-	"strings"
+	"io"
 )
 
-func AppendAttr(buf *strings.Builder, k, v string) {
+type StringByteWriter interface {
+	io.StringWriter
+	io.ByteWriter
+}
+
+func AppendAttr(buf StringByteWriter, k, v string) {
 	buf.WriteByte(' ')
 	buf.WriteString(k)
 	buf.WriteString(`="`)
@@ -13,7 +18,7 @@ func AppendAttr(buf *strings.Builder, k, v string) {
 	buf.WriteByte('"')
 }
 
-func AppendAttrAny(buf *strings.Builder, k string, v any) {
+func AppendAttrAny(buf StringByteWriter, k string, v any) {
 	if !FuzzyBool(v) {
 		return
 	}
