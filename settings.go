@@ -157,7 +157,7 @@ func LoadConfig(ge *Configuration, env string, installHook func(*Settings)) *Set
 
 		decoder := json.NewDecoder(bytes.NewReader(jsonfix.Bytes(raw)))
 		decoder.DisallowUnknownFields()
-		err = decoder.Decode(settings)
+		err = decoder.Decode(full)
 		if err != nil {
 			log.Fatalf("** %v", fmt.Errorf("%s: %w", overridesFile, err))
 		}
