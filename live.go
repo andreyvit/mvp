@@ -70,7 +70,7 @@ func (app *App) Subscribe(ctx context.Context, lc flogger.Context, w http.Respon
 		if len(msgs) > 0 {
 			flogger.Log(lc, "channel(%v): Sending %d msgs", ch, len(msgs))
 			for _, msg := range msgs {
-				flogger.Log(lc, "channel(%v): Data:\n%s", ch, msg.Data)
+				// flogger.Log(lc, "channel(%v): Data:\n%s", ch, msg.Data)
 				sm := sse.Msg{
 					ID:   uint64(msg.ID),
 					Data: msg.Data,
