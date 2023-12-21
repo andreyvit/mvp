@@ -67,6 +67,12 @@ func (app *App) URL(name string, extras ...URLOption) string {
 		case string:
 			if strings.HasPrefix(extra, "#") {
 				switch extra {
+				case "#":
+					if i+1 >= len(extras) {
+						panic(fmt.Errorf("route %s: no value following param %q", name, extra))
+					}
+					i++
+					g.Fragment = fmt.Sprint(extras[i])
 				case "#abs":
 					g.Absolute = true
 				default:
@@ -92,6 +98,8 @@ func (app *App) URL(name string, extras ...URLOption) string {
 					g.PathKeys = make(map[string]string)
 				}
 				g.PathKeys[s] = fmt.Sprint(extras[i])
+			} else {
+				panic(fmt.Errorf("route %s: unsupported extra %T %q", name, extra, extra))
 			}
 		case mvpm.URLOption:
 			if extra == Absolute {
@@ -113,7 +121,8 @@ func (app *App) URL(name string, extras ...URLOption) string {
 	}
 
 	if g.Absolute {
-		g.URL = *app.BaseURL
+		g.URL.Scheme = app.BaseURL.Scheme
+		g.URL.Host = app.BaseURL.Host
 	}
 	g.Path = path
 	if g.QueryParams != nil {
