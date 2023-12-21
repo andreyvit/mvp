@@ -146,6 +146,12 @@ func (app *App) writeResponse(rc *RC, output any, w http.ResponseWriter, r *http
 			w.WriteHeader(output.StatusCode)
 		}
 		w.Write(b)
+	case *hotwired.Stream:
+		w.Header().Set("Content-Type", hotwired.StreamContentType)
+		w.Write(output.Buffer.Bytes())
+	case hotwired.StreamData:
+		w.Header().Set("Content-Type", hotwired.StreamContentType)
+		w.Write([]byte(output))
 	case *Redirect:
 		path := output.EffectivePath()
 		http.Redirect(w, r, path, output.EffectiveStatusCode())
