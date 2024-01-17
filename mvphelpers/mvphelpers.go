@@ -17,6 +17,7 @@ func FuncMap() template.FuncMap {
 		"jsondict":     JSONDict,
 		"list":         List,
 		"subst":        Subst,
+		"option_tag":   OptionTag,
 	}
 }
 

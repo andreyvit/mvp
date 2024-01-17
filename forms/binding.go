@@ -379,6 +379,22 @@ func BindMapKeyDeletingZeros[T comparable, K comparable](m map[K]T, key K) *Bind
 	}
 }
 
+func BindJSONObjectKeyWithDefault[T any](m map[string]any, key string, defaultValue T) *Binding[T] {
+	return &Binding[T]{
+		Getter: func() T {
+			value, ok := m[key]
+			if !ok || value == nil {
+				return defaultValue
+			}
+			return value.(T)
+		},
+		Setter: func(value T) error {
+			m[key] = value
+			return nil
+		},
+	}
+}
+
 func BindNot(b *Binding[bool]) *Binding[bool] {
 	return &Binding[bool]{
 		Getter: func() bool {

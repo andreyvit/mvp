@@ -369,3 +369,10 @@ type TagOpts struct {
 	Class string
 	Attrs map[string]any
 }
+
+func (to *TagOpts) SetAttr(name string, value any) {
+	if to.Attrs == nil {
+		to.Attrs = make(map[string]any)
+	}
+	to.Attrs[name] = value
+}
