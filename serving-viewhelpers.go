@@ -39,6 +39,16 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 		}
 		return r
 	}
+	m["repeat_fromto"] = func(start, end int) []int {
+		if end < start {
+			return nil
+		}
+		r := make([]int, 0, end-start+1)
+		for i := start; i <= end; i++ {
+			r = append(r, i)
+		}
+		return r
+	}
 	m["pick"] = func(i int, values ...any) any {
 		return values[i%len(values)]
 	}
@@ -112,6 +122,14 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 	m["fallback"] = func(values ...any) any {
 		for _, v := range values {
 			if mvphelpers.FuzzyBool(v) {
+				return v
+			}
+		}
+		return nil
+	}
+	m["fallback_if_nil"] = func(values ...any) any {
+		for _, v := range values {
+			if v != nil {
 				return v
 			}
 		}
