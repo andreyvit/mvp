@@ -54,6 +54,15 @@ func RandomAlpha(n int) string {
 	return string(raw)
 }
 
+func RandomPassword(n int) string {
+	const alphabet = "abcdefghjklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789-_$#!%*&" // 64 characters
+	raw := RandomBytes(n)
+	for i, b := range raw {
+		raw[i] = alphabet[int(b)%len(alphabet)]
+	}
+	return string(raw)
+}
+
 func RandomDigits(n int) string {
 	const alphabet = "0123456789"
 	raw := RandomBytes(n)
