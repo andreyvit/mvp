@@ -37,6 +37,73 @@ func Subst(str string, keysAndValues ...any) string {
 	return str
 }
 
+type SubstReplaceFunc = func(buf *strings.Builder, key string)
+
+func SubstVars(source string, isSourceRawHTML bool, prefix, suffix string, replace SubstReplaceFunc) template.HTML {
+	var buf strings.Builder
+	for {
+		before, after, ok := strings.Cut(source, prefix)
+		if !ok {
+			break
+		}
+		buf.WriteString(maybeEscapeHTML(before, !isSourceRawHTML))
+
+		substKey, after, ok := strings.Cut(after, suffix)
+		if !ok {
+			break
+		}
+		source = after
+		replace(&buf, substKey)
+	}
+	buf.WriteString(maybeEscapeHTML(source, !isSourceRawHTML))
+	return template.HTML(buf.String())
+}
+
+func MakeReplaceFunc(values ...SubstValue) SubstReplaceFunc {
+	return func(buf *strings.Builder, key string) {
+		i := findSubstValue(values, key)
+		if i < 0 {
+			buf.WriteString("!!")
+			buf.WriteString(template.HTMLEscapeString(key))
+			buf.WriteString("!!")
+			return
+		}
+		v := values[i]
+		frag := FuzzyHTML(v.Value)
+		if v.Classes != "" {
+			frag = template.HTML(fmt.Sprintf(`<span class="%s">%s</span>`, template.HTMLEscapeString(v.Classes), frag))
+		}
+		buf.WriteString(string(frag))
+	}
+}
+
+type SubstValue struct {
+	Key     string
+	Value   any
+	Classes string
+}
+
+func SubstVal(key string, value any, classes string) SubstValue {
+	return SubstValue{key, value, classes}
+}
+
+func findSubstValue(values []SubstValue, key string) int {
+	for i, sv := range values {
+		if sv.Key == key {
+			return i
+		}
+	}
+	return -1
+}
+
+func maybeEscapeHTML(str string, escape bool) string {
+	if escape {
+		return template.HTMLEscapeString(str)
+	} else {
+		return str
+	}
+}
+
 // ExposeHelperPanic helps to debug panics inside view helpers.
 // Add the following call at the start of a panicing helper:
 //
