@@ -229,6 +229,7 @@ func (form *Form) finalize(data *FormData) {
 
 type Group struct {
 	RenderableImpl[Group]
+	HTMLID     string
 	Name       string
 	Title      string
 	WrapperTag TagOpts
