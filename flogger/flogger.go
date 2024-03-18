@@ -3,6 +3,7 @@ package flogger
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 )
 
@@ -10,6 +11,21 @@ type Context interface {
 	Logf(format string, args ...any)
 	AppendLogPrefix(buf *bytes.Buffer)
 	AppendLogSuffix(buf *bytes.Buffer)
+}
+
+var ContextKey = contextKeyType{}
+
+type contextKeyType struct{}
+
+func (contextKeyType) String() string {
+	return "flogger.ContextKey"
+}
+
+func ContextFrom(ctx context.Context) Context {
+	if v := ctx.Value(ContextKey); v != nil {
+		return v.(Context)
+	}
+	return DefaultContext
 }
 
 var DefaultContext = panicOutput{}
