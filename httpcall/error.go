@@ -1,23 +1,26 @@
-package mvputil
+package httpcall
 
 import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
-type CallErrorCategory struct {
+type ErrorCategory struct {
 	Name string
 }
 
-func (err *CallErrorCategory) Error() string {
+func (err *ErrorCategory) Error() string {
 	return err.Name
 }
 
-type CallError struct {
+type Error struct {
 	CallID            string
 	IsNetwork         bool
+	IsRetriable       bool
+	RetryDelay        time.Duration
 	StatusCode        int
 	Type              string
 	Path              string
@@ -25,17 +28,17 @@ type CallError struct {
 	RawResponseBody   []byte
 	PrintResponseBody bool
 	Cause             error
-	Category1         *CallErrorCategory
-	Category2         *CallErrorCategory
+	Category1         *ErrorCategory
+	Category2         *ErrorCategory
 }
 
-func (e *CallError) Error() string {
+func (e *Error) Error() string {
 	return e.customError(true)
 }
-func (e *CallError) ShortError() string {
+func (e *Error) ShortError() string {
 	return e.customError(false)
 }
-func (e *CallError) customError(withIdentity bool) string {
+func (e *Error) customError(withIdentity bool) string {
 	var buf strings.Builder
 	if withIdentity {
 		if e.CallID != "" {
@@ -89,15 +92,15 @@ func (e *CallError) customError(withIdentity bool) string {
 	return buf.String()
 }
 
-func (e *CallError) Unwrap() error {
+func (e *Error) Unwrap() error {
 	return e.Cause
 }
 
-func (e *CallError) IsUnprocessableEntity() bool {
+func (e *Error) IsUnprocessableEntity() bool {
 	return e.StatusCode == http.StatusUnprocessableEntity
 }
 
-func (e *CallError) AddCategory(cat *CallErrorCategory) *CallError {
+func (e *Error) AddCategory(cat *ErrorCategory) *Error {
 	if cat != nil && !e.IsInCategory(cat) {
 		if e.Category1 == nil {
 			e.Category1 = cat
@@ -110,13 +113,13 @@ func (e *CallError) AddCategory(cat *CallErrorCategory) *CallError {
 	return e
 }
 
-func (e *CallError) Is(target error) bool {
-	if cat, ok := target.(*CallErrorCategory); ok {
+func (e *Error) Is(target error) bool {
+	if cat, ok := target.(*ErrorCategory); ok {
 		return e.IsInCategory(cat)
 	}
 	return false
 }
 
-func (e *CallError) IsInCategory(cat *CallErrorCategory) bool {
+func (e *Error) IsInCategory(cat *ErrorCategory) bool {
 	return cat != nil && (e.Category1 == cat || e.Category2 == cat)
 }
