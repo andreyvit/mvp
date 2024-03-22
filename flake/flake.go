@@ -22,7 +22,8 @@ type (
 	// ID has 40 time bits (in ms), 8 node bits, 16 sequence bits.
 	ID uint64
 
-	IDish interface {
+	// IDable is implemented by anyone carrying ID as a primary identifier.
+	IDable interface {
 		FlakeID() ID
 	}
 
@@ -165,7 +166,7 @@ func (id *ID) UnmarshalJSON(input []byte) error {
 
 var nullb = []byte("null")
 
-// Bubblehouse epoch starts on Jan 1, 2020 GMT
+// EpochMs is the Unix millisecond timestamp corresponding to 0 flake.Millis — Jan 1, 2020 GMT (aka the start of flake epoch).
 const EpochMs uint64 = 1577836800_000
 
 const (
@@ -226,7 +227,7 @@ func MillisAt(tm time.Time) Millis {
 	}
 	v := int64(tm.UnixMilli()) - int64(EpochMs)
 	if v < 0 || uint64(v) > timeMask {
-		panic(fmt.Errorf("time %v is unrepresentable as bubble milliseconds", tm))
+		panic(fmt.Errorf("time %v is unrepresentable as flake.MIllis", tm))
 	}
 	return uint64(v)
 }

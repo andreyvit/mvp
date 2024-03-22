@@ -8,7 +8,7 @@ import (
 )
 
 type Object interface {
-	FlakeID() flake.ID
+	flake.IDable
 	ObjectType() Type
 }
 
