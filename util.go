@@ -384,11 +384,20 @@ func IsMobileUA(ua string) bool {
 func IsAndroidUA(ua string) bool {
 	return androidUARe.MatchString(ua)
 }
+func IsSafariUA(ua string) bool {
+	return strings.Contains(ua, "Safari") && !(strings.Contains(ua, "Chrome") || strings.Contains(ua, "Chromium"))
+}
 func IsMobileRequest(r *http.Request) bool {
 	return IsMobileUA(r.Header.Get("User-Agent"))
 }
 func IsAndroidRequest(r *http.Request) bool {
 	return IsAndroidUA(r.Header.Get("User-Agent"))
+}
+func IsSafariRequest(r *http.Request) bool {
+	return IsSafariUA(r.Header.Get("User-Agent"))
+}
+func IsBrowserCripplingCrossOriginCookies(r *http.Request) bool {
+	return IsSafariRequest(r)
 }
 func SMSLinkURI(phone, body string, ua string) string {
 	qs := PlusToPercent20(url.Values{"body": {body}}.Encode())
