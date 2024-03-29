@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -30,6 +31,13 @@ type (
 	// Millis is an alias for uint64 for code clarity.
 	Millis = uint64
 )
+
+func (id ID) LogValue() slog.Value {
+	if id == 0 {
+		return slog.StringValue("0")
+	}
+	return slog.StringValue(id.String())
+}
 
 func (id ID) IsZero() bool {
 	return id == 0

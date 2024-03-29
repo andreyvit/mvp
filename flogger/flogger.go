@@ -5,6 +5,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
+	"strconv"
+	"strings"
 )
 
 type Context interface {
@@ -105,4 +108,49 @@ func (_ panicOutput) AppendLogPrefix(buf *bytes.Buffer) {
 }
 
 func (_ panicOutput) AppendLogSuffix(buf *bytes.Buffer) {
+}
+
+func Logx(lc Context, level slog.Level, message string, args ...slog.Attr) {
+	args = append(args, slog.String("level", level.String()))
+	Log(lc, Format(message, args...))
+}
+
+func Format(msg string, attrs ...slog.Attr) string {
+	if len(attrs) == 0 {
+		return msg
+	} else {
+		buf := []byte(msg)
+		buf = append(buf, " -"...)
+		buf = Append(buf, attrs...)
+		return string(buf)
+	}
+}
+
+func Append(buf []byte, attrs ...slog.Attr) []byte {
+	var prefix []byte
+	return appendPrefix(buf, &prefix, attrs...)
+}
+
+func appendPrefix(buf []byte, prefix *[]byte, attrs ...slog.Attr) []byte {
+	for _, attr := range attrs {
+		if attr.Value.Kind() == slog.KindGroup {
+			n := len(*prefix)
+			*prefix = append(*prefix, attr.Key...)
+			*prefix = append(*prefix, '.')
+			buf = appendPrefix(buf, prefix, attr.Value.Group()...)
+			*prefix = (*prefix)[:n]
+		} else {
+			buf = append(buf, ' ')
+			buf = append(buf, (*prefix)...)
+			buf = append(buf, attr.Key...)
+			buf = append(buf, '=')
+			s := attr.Value.String()
+			if strings.IndexByte(s, ' ') < 0 && strings.IndexByte(s, '\n') < 0 && strings.IndexByte(s, '"') < 0 {
+				buf = append(buf, s...)
+			} else {
+				buf = strconv.AppendQuote(buf, s)
+			}
+		}
+	}
+	return buf
 }
