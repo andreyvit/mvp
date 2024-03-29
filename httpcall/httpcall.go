@@ -85,6 +85,9 @@ func (r *Request) StatusCode() int {
 }
 
 func (r *Request) OnShouldStart(f func(r *Request) error) {
+	if f == nil {
+		return
+	}
 	if prev := r.ShouldStart; prev != nil {
 		r.ShouldStart = func(r *Request) error {
 			if err := prev(r); err != nil {
@@ -98,6 +101,9 @@ func (r *Request) OnShouldStart(f func(r *Request) error) {
 }
 
 func (r *Request) OnStarted(f func(r *Request)) {
+	if f == nil {
+		return
+	}
 	if prev := r.Started; prev != nil {
 		r.Started = func(r *Request) {
 			prev(r)
@@ -109,6 +115,9 @@ func (r *Request) OnStarted(f func(r *Request)) {
 }
 
 func (r *Request) OnFailed(f func(r *Request)) {
+	if f == nil {
+		return
+	}
 	if prev := r.Failed; prev != nil {
 		r.Failed = func(r *Request) {
 			f(r)
@@ -120,6 +129,9 @@ func (r *Request) OnFailed(f func(r *Request)) {
 }
 
 func (r *Request) OnFinished(f func(r *Request)) {
+	if f == nil {
+		return
+	}
 	if prev := r.Finished; prev != nil {
 		r.Finished = func(r *Request) {
 			f(r)
@@ -127,6 +139,22 @@ func (r *Request) OnFinished(f func(r *Request)) {
 		}
 	} else {
 		r.Finished = f
+	}
+}
+
+func (r *Request) OnValidate(f func() error) {
+	if f == nil {
+		return
+	}
+	if prev := r.ValidateOutput; prev != nil {
+		r.ValidateOutput = func() error {
+			if err := prev(); err != nil {
+				return err
+			}
+			return f()
+		}
+	} else {
+		r.ValidateOutput = f
 	}
 }
 
@@ -328,7 +356,7 @@ func (r *Request) doOnce() *Error {
 		}
 		return nil
 	} else {
-		errResult := &Error{
+		r.Error = &Error{
 			CallID:            r.CallID,
 			StatusCode:        resp.StatusCode,
 			IsRetriable:       (resp.StatusCode >= 500 && resp.StatusCode <= 599),
@@ -337,8 +365,11 @@ func (r *Request) doOnce() *Error {
 		}
 		if r.ParseErrorResponse != nil {
 			r.ParseErrorResponse(r)
+			if r.Error == nil {
+				return nil // avoid returning non-nil error interface with nil *Error inside
+			}
 		}
-		return errResult
+		return r.Error
 	}
 }
 

@@ -21,11 +21,9 @@ func (r *Request) Curl() string {
 			buf.WriteString(shellQuote(k + ": " + v))
 		}
 	}
-	if r.Input == nil {
-		if len(r.RawRequestBody) > 0 {
-			buf.WriteString(" -d ")
-			buf.WriteString(shellQuote(string(r.RawRequestBody)))
-		}
+	if r.Input == nil && len(r.RawRequestBody) > 0 {
+		buf.WriteString(" -d ")
+		buf.WriteString(shellQuote(string(r.RawRequestBody)))
 	} else if bodyValues, ok := r.Input.(url.Values); ok {
 		for k, vv := range bodyValues {
 			for _, v := range vv {
@@ -33,9 +31,9 @@ func (r *Request) Curl() string {
 				buf.WriteString(shellQuote(k + "=" + v))
 			}
 		}
-	} else if raw, ok := r.Input.([]byte); ok {
+	} else if len(r.RawRequestBody) > 0 {
 		buf.WriteString(" -d ")
-		buf.WriteString(shellQuote(string(raw)))
+		buf.WriteString(shellQuote(string(r.RawRequestBody)))
 	}
 	buf.WriteString(" ")
 	buf.WriteString(shellQuote(r.HTTPRequest.URL.String()))
