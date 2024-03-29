@@ -44,6 +44,7 @@ func (app *App) EnqueueEphemeral(kind *mvpjobs.Kind, name string, f func(rc *RC)
 	job := &EphemeralJob{kind, key, f}
 	if app.Settings.IsTesting {
 		rc := NewRC(context.Background(), app, "ejobs:inline")
+		defer rc.Close()
 		// TODO: better context?
 		app.runEphemeralJob(rc, job)
 	} else {
@@ -70,6 +71,7 @@ func (app *App) StartEphemeralJobWorkers(ctx context.Context, count int, quitf f
 func (app *App) runEphemeralJobsContinuously(ctx context.Context, workerIdx, workerCount int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	rc := NewRC(ctx, app, fmt.Sprintf("ejobs:w%d", workerIdx))
+	defer rc.Close()
 	for ctx.Err() == nil {
 		select {
 		case job := <-app.ephemeralJobQueue.q:

@@ -7,7 +7,7 @@ import (
 )
 
 type Hooks struct {
-	initApp      []func(app *App)
+	initApp      []func(app *App, init *AppInit)
 	closeApp     []func(app *App)
 	initRC       []func(app *App, rc *RC)
 	closeRC      []func(app *App, rc *RC)
@@ -19,13 +19,15 @@ type Hooks struct {
 	helpers      []func(m template.FuncMap)
 	middleware   []func(r Router)
 	domainRoutes []func(app *App, b *DomainRouter)
+	bustCache    []func(app *App, key any) bool
+	dbChange     []func(rc *RC, chg *edb.Change)
 	siteRoutes   map[*Site][]func(b *RouteBuilder)
 	urlGenOption []func(app *App, g *URLGen, option string) bool
 	urlGen       []func(app *App, g *URLGen)
 	jwtTokenKey  []func(rc *RC, c *TokenDecoding) error
 }
 
-func (h *Hooks) InitApp(f func(app *App)) {
+func (h *Hooks) InitApp(f func(app *App, init *AppInit)) {
 	h.initApp = append(h.initApp, f)
 }
 
@@ -84,12 +86,20 @@ func (h *Hooks) URLGenOption(f func(app *App, g *URLGen, option string) bool) {
 	h.urlGenOption = append(h.urlGenOption, f)
 }
 
+func (h *Hooks) BustCache(f func(app *App, key any) bool) {
+	h.bustCache = append(h.bustCache, f)
+}
+
 func (h *Hooks) URLGen(f func(app *App, g *URLGen)) {
 	h.urlGen = append(h.urlGen, f)
 }
 
 func (h *Hooks) JWTTokenKey(f func(rc *RC, c *TokenDecoding) error) {
 	h.jwtTokenKey = append(h.jwtTokenKey, f)
+}
+
+func (h *Hooks) DBChange(f func(rc *RC, chg *edb.Change)) {
+	h.dbChange = append(h.dbChange, f)
 }
 
 func runHooksFwd1[T1 any](hooks []func(a1 T1), a1 T1) {
@@ -146,6 +156,15 @@ func runHooksRev3[T1, T2, T3 any](hooks []func(a1 T1, a2 T2, a3 T3), a1 T1, a2 T
 	for i := len(hooks) - 1; i >= 0; i-- {
 		hooks[i](a1, a2, a3)
 	}
+}
+
+func runHooksFwd2Or[T1, T2 any](hooks []func(a1 T1, a2 T2) bool, a1 T1, a2 T2) bool {
+	for _, f := range hooks {
+		if f(a1, a2) {
+			return true
+		}
+	}
+	return false
 }
 
 func runHooksFwd3Or[T1, T2, T3 any](hooks []func(a1 T1, a2 T2, a3 T3) bool, a1 T1, a2 T2, a3 T3) bool {

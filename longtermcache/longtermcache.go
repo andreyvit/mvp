@@ -51,15 +51,7 @@ func (c *Cache[K, T]) Lookup(key K, pol Policy) *T {
 		if value, ok := e.load(); ok {
 			return value
 		}
-
-		e.makingLock.Lock()
-		defer e.makingLock.Unlock()
-		if value, ok := e.load(); ok {
-			return value
-		}
-
-		return c.updateHoldingMakingLock(key, e)
-
+		fallthrough
 	case Fresh:
 		e.makingLock.Lock()
 		defer e.makingLock.Unlock()
@@ -76,6 +68,10 @@ func (c *Cache[K, T]) Lookup(key K, pol Policy) *T {
 	default:
 		panic("invalid policy")
 	}
+}
+
+func (c *Cache[K, T]) Discard(key K) {
+	c.lookupEntry(key).discard()
 }
 
 func (c *Cache[K, T]) updateHoldingMakingLock(key K, e *entry[T]) *T {

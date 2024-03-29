@@ -49,8 +49,9 @@ import (
 //
 // As such, this type is meant to be customized for a particular application.
 type RC struct {
-	tx  *edb.Tx
-	err error
+	tx       *edb.Tx
+	err      error
+	isClosed bool
 
 	auth Auth
 
@@ -77,7 +78,8 @@ type RC struct {
 	RateLimitPreset RateLimitPreset
 	RateLimitKey    string
 
-	extraLogger func(format string, args ...any)
+	extraLogger  func(format string, args ...any)
+	cacheBusting map[any]struct{}
 }
 
 type RCish interface {
@@ -189,6 +191,12 @@ func (rc *RC) LogTo(buf *strings.Builder) {
 }
 
 func (rc *RC) Close() {
+	if rc.isClosed {
+		return
+	}
+	rc.isClosed = true
+	rc.DoneReading()
+
 	runHooksRev2(rc.app.Hooks.closeRC, rc.app, rc)
 	// TODO: return allocated values to the pool
 }

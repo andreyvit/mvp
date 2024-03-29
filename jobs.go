@@ -96,6 +96,7 @@ func (app *App) Reenqueue(rc RCish, kind *mvpjobs.Kind, j *mvpjobs.Job, in mvpjo
 
 func (app *App) failRunningJobs(ctx context.Context) {
 	rc := NewRC(ctx, app, "jobs")
+	defer rc.Close()
 
 	var jobsToFail []*mvpjobs.Job
 	rc.MustRead(func() {
@@ -143,6 +144,7 @@ func (app *App) StartJobWorkers(ctx context.Context, count int, quitf func(err e
 func (app *App) runJobsContinuously(ctx context.Context, workerIdx, workerCount int, donec chan<- struct{}) {
 	defer sendSignal(donec)
 	rc := NewRC(ctx, app, fmt.Sprintf("jobs:w%d", workerIdx))
+	defer rc.Close()
 	for ctx.Err() == nil {
 		c := app.runPendingJobsOnce(rc, workerIdx, workerCount)
 		if c == 0 {
@@ -158,6 +160,7 @@ func (app *App) runJobsContinuously(ctx context.Context, workerIdx, workerCount 
 
 func (app *App) RunPendingJobs(ctx context.Context) int {
 	rc := NewRC(ctx, app, "jobs")
+	defer rc.Close()
 	return app.runPendingJobsOnce(rc, 0, 0)
 }
 
@@ -264,6 +267,7 @@ func (app *App) executeJob(ctx context.Context, jid mvpjobs.JobID, kind *mvpjobs
 	in.SetJobName(name)
 
 	rc := NewRC(ctx, app, fmt.Sprintf("jobs:w%d:%s:%v:%d", workerIdx, kind.Name, jid, attempt))
+	defer rc.Close()
 	// rc.Auth = bm.Auth{
 	// 	Type: bm.ActorTypeAdmin,
 	// }

@@ -56,8 +56,9 @@ type App struct {
 	templates    *template.Template
 	templatesDev atomic.Value
 
-	db  *edb.DB
-	gen *flake.Gen
+	db                  *edb.DB
+	gen                 *flake.Gen
+	dbMonitoringOptions map[*edb.Table]edb.ChangeFlags
 
 	methodsByName     map[string]*MethodImpl
 	jobsByKind        map[*mvpjobs.Kind]*JobImpl
@@ -69,6 +70,10 @@ type App struct {
 	rateLimiters map[RateLimitPreset]map[RateLimitGranularity]*RateLimiter
 
 	// rateLimiters map[string]
+}
+
+type AppInit struct {
+	app *App
 }
 
 func (app *App) Initialize(settings *Settings, opt AppOptions) {
@@ -132,10 +137,13 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 
 	initRateLimiting(app)
 	initRouting(app)
-	runHooksFwd1(app.Hooks.initApp, app)
+
+	init := AppInit{app}
+	runHooksFwd2(app.Hooks.initApp, app, &init)
 
 	{
 		rc := NewRC(ctx, app, "init")
+		defer rc.Close()
 		allMigrations := collectMigrations(app, rc)
 
 		rc.MustWrite(func() {
@@ -160,4 +168,12 @@ func (app *App) Close() {
 	app.stopApp()
 	runHooksRev1(app.Hooks.closeApp, app)
 	closeAppDB(app)
+}
+
+func (init *AppInit) MonitorDBChanges(tbl *edb.Table, flags edb.ChangeFlags) {
+	app := init.app
+	if app.dbMonitoringOptions == nil {
+		app.dbMonitoringOptions = make(map[*edb.Table]edb.ChangeFlags)
+	}
+	app.dbMonitoringOptions[tbl] |= flags | edb.ChangeFlagNotify
 }

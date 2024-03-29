@@ -61,14 +61,27 @@ func (rc *RC) InTx(affinity mvpm.StoreAffinity, f func() error) error {
 			return f()
 		}
 	}
-	return rc.app.db.Tx(affinity.IsWriter(), func(tx *edb.Tx) error {
+	isWrite := affinity.IsWriter()
+	err := rc.app.db.Tx(isWrite, func(tx *edb.Tx) error {
 		rc.tx = tx
-		tx.OnChange(rc.onDBChange)
+		tx.OnChange(rc.app.dbMonitoringOptions, rc.onDBChange)
 		defer func() {
 			rc.tx = nil
 		}()
 		return f()
 	})
+	if isWrite {
+		rc.handleWriteTxEnded()
+	}
+	return err
+}
+
+func (rc *RC) IsInWriteTx() bool {
+	return rc.tx != nil && rc.tx.IsWritable()
+}
+
+func (rc *RC) handleWriteTxEnded() {
+	rc.applyDelayedCacheBusting()
 }
 
 // func (rc *RC) Commit() error {
