@@ -19,7 +19,7 @@ type Hooks struct {
 	helpers      []func(m template.FuncMap)
 	middleware   []func(r Router)
 	domainRoutes []func(app *App, b *DomainRouter)
-	bustCache    []func(app *App, key any) bool
+	bustCache    []func(rc *RC, key any) bool
 	dbChange     []func(rc *RC, chg *edb.Change)
 	siteRoutes   map[*Site][]func(b *RouteBuilder)
 	urlGenOption []func(app *App, g *URLGen, option string) bool
@@ -86,7 +86,7 @@ func (h *Hooks) URLGenOption(f func(app *App, g *URLGen, option string) bool) {
 	h.urlGenOption = append(h.urlGenOption, f)
 }
 
-func (h *Hooks) BustCache(f func(app *App, key any) bool) {
+func (h *Hooks) BustCache(f func(rc *RC, key any) bool) {
 	h.bustCache = append(h.bustCache, f)
 }
 

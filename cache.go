@@ -20,7 +20,7 @@ func (rc *RC) BustCache(keys ...any) {
 			rc.cacheBusting[key] = struct{}{}
 		}
 	} else {
-		rc.app.bustCaches(keys)
+		bustCaches(rc, keys)
 	}
 }
 
@@ -30,13 +30,17 @@ func (rc *RC) applyDelayedCacheBusting() {
 	}
 	keys := maps.Keys(rc.cacheBusting)
 	maps.Clear(rc.cacheBusting)
-	rc.app.bustCaches(keys)
+	bustCaches(rc, keys)
 }
 
-func (app *App) bustCaches(keys []any) {
+func bustCaches(rc *RC, keys []any) {
+	if len(keys) == 0 {
+		return
+	}
 	for _, key := range keys {
-		if !runHooksFwd2Or(app.Hooks.bustCache, app, key) {
+		if !runHooksFwd2Or(rc.app.Hooks.bustCache, rc, key) {
 			panic(fmt.Errorf("don't know how to bust cache for key %T %v", key, key))
 		}
 	}
+	rc.DoneReading()
 }
