@@ -12,6 +12,7 @@ type Checkbox struct {
 	Field
 	TagOpts
 	*Binding[bool]
+	UpdateFormOnChange bool
 }
 
 func (Checkbox) DefaultTemplate() string { return "control-checkbox" }
@@ -22,6 +23,13 @@ func (c *Checkbox) Finalize(state *State) {
 func (c *Checkbox) Process(*FormData) {
 	c.Binding.SetString(c.RawFormValue, parseBool)
 }
+
+type CheckboxWithLabel struct {
+	Checkbox
+	Label any
+}
+
+func (CheckboxWithLabel) DefaultTemplate() string { return "control-checkbox-labeled" }
 
 type InputWellOpts struct {
 	LeftLabel     string
