@@ -1,6 +1,8 @@
 package forms
 
-import "html/template"
+import (
+	"html/template"
+)
 
 type Template string
 
@@ -13,12 +15,28 @@ type Header struct {
 	Template
 	TemplateStyle
 	TagOpts
-	Text string
+	Text  string
+	Level int
 }
 
-func (Header) DefaultTemplate() string { return "embed-header" }
+func (h *Header) DefaultTemplate() string {
+	switch h.Level {
+	case 0:
+		return "embed-header"
+	case 1:
+		return "embed-subheader"
+	case 2:
+		return "embed-subsubheader"
+	default:
+		return "embed-subsubsubheader"
+	}
+}
 
 func (Header) Finalize(state *State) {}
+
+func NewHeader(title string) *Header       { return &Header{Text: title, Level: 0} }
+func NewSubheader(title string) *Header    { return &Header{Text: title, Level: 1} }
+func NewSubsubheader(title string) *Header { return &Header{Text: title, Level: 2} }
 
 type Image struct {
 	RenderableImpl[Image]
