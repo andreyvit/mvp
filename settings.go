@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/andreyvit/jsonfix"
@@ -21,6 +22,7 @@ import (
 type Settings struct {
 	Env           string
 	Configuration *Configuration
+	GoRuntimeSettings
 
 	// Configuration options
 	LocalOverridesFile string
@@ -55,6 +57,11 @@ type Settings struct {
 	EmailDefaultLayout           string
 
 	JWTIssuers []string // Issuer and Audience for this app's tokens
+}
+
+type GoRuntimeSettings struct {
+	MemLimitMB int64
+	GCPercent  int
 }
 
 type Secrets map[string]string
@@ -227,5 +234,16 @@ func parseConfigSections(ge *Configuration, sections []string, configBySection m
 		if err != nil {
 			log.Fatalf("** %v", fmt.Errorf("%s: %s: %w", ge.ConfigFileName, section, err))
 		}
+	}
+}
+
+func (rs *GoRuntimeSettings) Apply() {
+	if rs.GCPercent != 0 {
+		debug.SetGCPercent(rs.GCPercent)
+		log.Printf("GC percentage set to %d%%", rs.GCPercent)
+	}
+	if rs.MemLimitMB != 0 {
+		debug.SetMemoryLimit(rs.MemLimitMB * (1024 * 1024))
+		log.Printf("Memory limit set to %d MB", rs.MemLimitMB)
 	}
 }
