@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,7 +31,9 @@ type (
 		Method                 string
 		BaseURL                string
 		Path                   string
+		PathParams             map[string]string
 		QueryParams            url.Values
+		FullURLOverride        string // for APIs using REST-style links, completely overrides BaseURL, Path and QueryParams
 		Input                  any
 		RawRequestBody         []byte
 		RequestBodyContentType string
@@ -72,6 +75,18 @@ type (
 	}
 )
 
+func (r *Request) Clone() *Request {
+	result := new(Request)
+	*result = *r
+	if result.QueryParams != nil {
+		result.QueryParams = maps.Clone(result.QueryParams)
+	}
+	if result.Headers != nil {
+		result.Headers = maps.Clone(result.Headers)
+	}
+	return result
+}
+
 func (r *Request) IsIdempotent() bool {
 	r.Init()
 	return r.HTTPRequest.Method == http.MethodGet || r.HTTPRequest.Method == http.MethodHead
@@ -82,6 +97,13 @@ func (r *Request) StatusCode() int {
 		return 0
 	}
 	return r.HTTPResponse.StatusCode
+}
+
+func (r *Request) SetHeader(key, value string) {
+	if r.Headers == nil {
+		r.Headers = make(http.Header)
+	}
+	r.Headers.Set(key, value)
 }
 
 func (r *Request) OnShouldStart(f func(r *Request) error) {
@@ -168,13 +190,22 @@ func (r *Request) Init() {
 		r.Context = context.Background()
 	}
 	if r.HTTPRequest == nil {
-		urlStr := buildURL(r.BaseURL, r.Path, r.QueryParams).String()
+		for k, v := range r.PathParams {
+			r.Path = strings.ReplaceAll(r.Path, k, url.PathEscape(v))
+		}
+
+		var urlStr string
+		if r.FullURLOverride != "" {
+			urlStr = r.FullURLOverride
+		} else {
+			if r.BaseURL == "" && r.Path == "" {
+				panic("BaseURL and/or Path must be specified (or HTTPRequest)")
+			}
+			urlStr = buildURL(r.BaseURL, r.Path, r.QueryParams).String()
+		}
 
 		if r.Method == "" {
 			panic("Method must be specified (or HTTPRequest)")
-		}
-		if r.BaseURL == "" && r.Path == "" {
-			panic("BaseURL and/or Path must be specified (or HTTPRequest)")
 		}
 
 		if r.Input != nil || r.RawRequestBody != nil {
@@ -222,6 +253,7 @@ func (r *Request) Init() {
 	for k, vv := range r.Headers {
 		r.HTTPRequest.Header[k] = vv
 	}
+	r.Headers = r.HTTPRequest.Header
 }
 
 func (r *Request) Do() error {
