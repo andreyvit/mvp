@@ -406,11 +406,13 @@ func (r *Request) doOnce() *Error {
 }
 
 func buildURL(baseURL, path string, queryParams url.Values) *url.URL {
-	if baseURL == "" {
-		baseURL, path = path, ""
+	var u *url.URL
+	if strings.Contains(path, "://") || baseURL == "" {
+		u = must(url.Parse(path))
+	} else {
+		u = must(url.Parse(baseURL))
+		u.Path = joinURLPath(u.Path, path)
 	}
-	u := must(url.Parse(baseURL))
-	u.Path = joinURLPath(u.Path, path)
 	if len(queryParams) > 0 {
 		u.RawQuery = queryParams.Encode()
 	}
