@@ -59,6 +59,26 @@ func SubstVars(source string, isSourceRawHTML bool, prefix, suffix string, repla
 	return template.HTML(buf.String())
 }
 
+func SubstVarsStr(source string, prefix, suffix string, replace SubstReplaceFunc) string {
+	var buf strings.Builder
+	for {
+		before, after, ok := strings.Cut(source, prefix)
+		if !ok {
+			break
+		}
+		buf.WriteString(before)
+
+		substKey, after, ok := strings.Cut(after, suffix)
+		if !ok {
+			break
+		}
+		source = after
+		replace(&buf, substKey)
+	}
+	buf.WriteString(source)
+	return buf.String()
+}
+
 func MakeReplaceFunc(values ...SubstValue) SubstReplaceFunc {
 	return func(buf *strings.Builder, key string) {
 		i := findSubstValue(values, key)
