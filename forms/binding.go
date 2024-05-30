@@ -304,6 +304,33 @@ func BindSliceEmptyOrSingle[T comparable](b *Binding[[]T], emptyValue T) *Bindin
 	}
 }
 
+func ConvertStringifiedList[T any](source *Binding[[]T], stringify func(T) string, parse func(s string) (T, error)) *Binding[[]string] {
+	return &Binding[[]string]{
+		Getter: func() []string {
+			value := source.Value()
+			result := make([]string, 0, len(value))
+			for _, el := range value {
+				result = append(result, stringify(el))
+			}
+			return result
+		},
+		Setter: func(newItems []string) error {
+			var items []T
+			for _, el := range newItems {
+				v, err := parse(el)
+				if err != nil {
+					return err
+				}
+				items = append(items, v)
+			}
+			source.Set(items)
+			return nil
+		},
+		ErrSite: source.ErrSite,
+		Child:   source,
+	}
+}
+
 func ConvertStringFields(b *Binding[[]string], sep rune) *Binding[string] {
 	formatSep := string(sep)
 	var fieldFunc func(rune) bool
@@ -332,6 +359,10 @@ func ConvertStringFields(b *Binding[[]string], sep rune) *Binding[string] {
 		ErrSite: b.ErrSite,
 		Child:   b,
 	}
+}
+
+func ConvertStringifiedFields[T any](b *Binding[[]T], sep rune, stringify func(T) string, parse func(s string) (T, error)) *Binding[string] {
+	return ConvertStringFields(ConvertStringifiedList(b, stringify, parse), sep)
 }
 
 func BindMapKey[T any, K comparable](m map[K]T, key K) *Binding[T] {
