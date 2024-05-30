@@ -3,12 +3,17 @@ package mvp
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/mvp/flogger"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
+)
+
+const (
+	MigrationRequestIDPrefix = "init:migration:"
 )
 
 func collectMigrations(app *App, lc flogger.Context) []*migration {
@@ -37,8 +42,15 @@ func executeMigrations(allMigrations []*migration, rc *RC) {
 	}
 }
 
+func RunningMigrationName(requestID string) string {
+	if s, ok := strings.CutPrefix(requestID, MigrationRequestIDPrefix); ok {
+		return s
+	}
+	return ""
+}
+
 func executeMigration(m *migration, rc *RC) {
-	rc.RequestID = fmt.Sprintf("init:migration:%s", m.name)
+	rc.RequestID = MigrationRequestIDPrefix + m.name
 	defer func() { rc.RequestID = "init" }()
 
 	flogger.Log(rc, "running...")
