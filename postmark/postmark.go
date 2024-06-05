@@ -144,7 +144,7 @@ func curl(method, path string, headers http.Header, body []byte) string {
 
 func shellQuote(source string) string {
 	const specialChars = "\\'\"`${[|&;<>()*?! \t\n~"
-	const specialInDouble = "$\\\""
+	const specialInDouble = "$\\\"!"
 
 	var buf strings.Builder
 	buf.Grow(len(source) + 10)

@@ -42,7 +42,7 @@ func (r *Request) Curl() string {
 
 func shellQuote(source string) string {
 	const specialChars = "\\'\"`${[|&;<>()*?! \t\n~"
-	const specialInDouble = "$\\\""
+	const specialInDouble = "$\\\"!"
 
 	var buf strings.Builder
 	buf.Grow(len(source) + 10)
