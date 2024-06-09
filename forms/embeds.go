@@ -19,13 +19,20 @@ type Header struct {
 	Level int
 }
 
+const (
+	HeaderLevelHeader          = 0
+	HeaderLevelSubheader       = 1
+	HeaderLevelSubsubheader    = 2
+	HeaderLevelSubsubsubheader = 3
+)
+
 func (h *Header) DefaultTemplate() string {
 	switch h.Level {
-	case 0:
+	case HeaderLevelHeader:
 		return "embed-header"
-	case 1:
+	case HeaderLevelSubheader:
 		return "embed-subheader"
-	case 2:
+	case HeaderLevelSubsubheader:
 		return "embed-subsubheader"
 	default:
 		return "embed-subsubsubheader"
@@ -34,9 +41,11 @@ func (h *Header) DefaultTemplate() string {
 
 func (Header) Finalize(state *State) {}
 
-func NewHeader(title string) *Header       { return &Header{Text: title, Level: 0} }
-func NewSubheader(title string) *Header    { return &Header{Text: title, Level: 1} }
-func NewSubsubheader(title string) *Header { return &Header{Text: title, Level: 2} }
+func NewHeader(title string) *Header    { return &Header{Text: title, Level: HeaderLevelHeader} }
+func NewSubheader(title string) *Header { return &Header{Text: title, Level: HeaderLevelSubheader} }
+func NewSubsubheader(title string) *Header {
+	return &Header{Text: title, Level: HeaderLevelSubsubheader}
+}
 
 type Image struct {
 	RenderableImpl[Image]
