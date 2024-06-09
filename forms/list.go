@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -37,6 +38,7 @@ type List[T comparable] struct {
 	RenderItem    func(item T, index int) *Group
 	RenderItemPtr func(item *T, index int) *Group
 	Sort          func(items []T)
+	Compare       func(a, b T) int
 	Empty         Child
 	TopArea       func() Children
 	BottomArea    func() Children
@@ -159,6 +161,8 @@ func (list *List[T]) Finalize(state *State) {
 	}
 	if list.Sort != nil {
 		list.Sort(items)
+	} else if list.Compare != nil {
+		slices.SortStableFunc(items, list.Compare)
 	}
 	list.items = items
 
