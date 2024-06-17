@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"fmt"
 	"log"
 	"mime/multipart"
 )
@@ -19,8 +20,9 @@ type FileUpload[T comparable] struct {
 	ButtonTitle string
 	ButtonTag   TagOpts
 
-	Handler func(file *multipart.FileHeader) (T, error)
-	Verify  func(raw string) (T, error)
+	Externalize func(value T) string
+	Handler     func(file *multipart.FileHeader) (T, error)
+	Verify      func(raw string) (T, error)
 }
 
 func (FileUpload[T]) DefaultTemplate() string { return "control-file" }
@@ -79,4 +81,17 @@ func (c *FileUpload[T]) Process(data *FormData) {
 
 	log.Printf("FileUpload.Process: value = %v", value)
 	c.Binding.Set(value)
+}
+
+func (c *FileUpload[T]) ExternalizedValue() string {
+	var zero T
+	value := c.Binding.Value()
+	if value == zero {
+		return ""
+	}
+	if c.Externalize != nil {
+		return c.Externalize(value)
+	} else {
+		return fmt.Sprint(value)
+	}
 }
