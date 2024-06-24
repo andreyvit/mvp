@@ -29,6 +29,10 @@ func (errs *SingleErrorSite) NoteChildError() {
 	}
 }
 
+func (errs *SingleErrorSite) ErrorStr() string {
+	return ErrorStr(errs.Error)
+}
+
 func (errs *SingleErrorSite) Invalid() bool         { return errs.ErrCount > 0 }
 func (errs *SingleErrorSite) Init(parent ErrorSite) { errs.ParentErrorSite = parent }
 
@@ -62,3 +66,16 @@ func (errs *MultiErrorSite) NoteChildError() {
 
 func (errs *MultiErrorSite) Invalid() bool         { return errs.ErrCount > 0 }
 func (errs *MultiErrorSite) Init(parent ErrorSite) { errs.ParentErrorSite = parent }
+
+func ErrorStr(err error) string {
+	if err == nil {
+		return ""
+	}
+	if e, ok := err.(interface{ PublicError() string }); ok {
+		s := e.PublicError()
+		if s != "" {
+			return s
+		}
+	}
+	return err.Error()
+}
