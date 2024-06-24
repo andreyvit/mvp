@@ -220,6 +220,8 @@ func JoinClasses(items ...any) string {
 	var classes []string
 	for _, item := range items {
 		switch item := item.(type) {
+		case nil:
+			break
 		case []string:
 			if classes == nil {
 				classes = item
