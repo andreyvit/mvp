@@ -153,19 +153,9 @@ func DetermineMIMEType(r *http.Request) string {
 
 type action func()
 
-func (_ action) String() string {
-	return ""
-}
-
-func (_ action) IsBoolFlag() bool {
-	return true
-}
-
-func (f action) Set(string) error {
-	f()
-	os.Exit(0)
-	return nil
-}
+func (_ action) String() string   { return "" }
+func (_ action) IsBoolFlag() bool { return true }
+func (f action) Set(string) error { f(); os.Exit(0); return nil }
 
 // CanonicalEmail returns an email suitable for unique checks.
 func CanonicalEmail(email string) string {
