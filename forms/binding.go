@@ -245,7 +245,7 @@ func Int64AsString(b *Binding[int64], opts ...any) *Binding[string] {
 				return sp.ModelValue, nil
 			}
 		}
-		v, err := strconv.ParseInt(str, 10, 0)
+		v, err := strconv.ParseInt(str, 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("invalid number")
 		}
