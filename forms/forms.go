@@ -306,13 +306,14 @@ type Item struct {
 	Name string
 	Identity
 
-	Label    string
-	LabelTag TagOpts
-	Desc     string
-	DescTag  TagOpts
-	ItemTag  TagOpts
-	Styles   []*Style
-	Template string
+	Label     string
+	LabelTag  TagOpts
+	Desc      string
+	DescTag   TagOpts
+	ItemTag   TagOpts
+	ExtraArgs map[string]any
+	Styles    []*Style
+	Template  string
 	TemplateStyle
 	SingleErrorSite
 
