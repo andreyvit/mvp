@@ -77,6 +77,7 @@ type RawSelect[T comparable] struct {
 	UpdateFormOnChange bool
 	Options            []*Option[T]
 	Stringify          func(T) string
+	MissingItemLabel   func(T) string
 	Parse              func(s string) (T, error)
 }
 
@@ -106,12 +107,16 @@ func (c *RawSelect[T]) Finalize(state *State) {
 		var zero T
 		if item != zero {
 			s := c.doStringify(item)
+			label := s
+			if c.MissingItemLabel != nil {
+				label = c.MissingItemLabel(item)
+			}
 			c.RawFormValue = s
 			if _, ok := optionsByHTMLValue[s]; !ok {
 				c.Options = append(c.Options, &Option[T]{
 					ModelValue: item,
 					HTMLValue:  s,
-					Label:      s,
+					Label:      label,
 				})
 			}
 		}
@@ -143,6 +148,7 @@ type RawMultiSelect[T comparable] struct {
 	UpdateFormOnChange bool
 	Options            []*Option[T]
 	Stringify          func(T) string
+	MissingItemLabel   func(T) string
 	Parse              func(s string) (T, error)
 }
 
@@ -170,12 +176,16 @@ func (c *RawMultiSelect[T]) Finalize(state *State) {
 	if c.RawFormValues == nil {
 		for _, item := range c.Binding.Value() {
 			s := c.doStringify(item)
+			label := s
+			if c.MissingItemLabel != nil {
+				label = c.MissingItemLabel(item)
+			}
 			c.RawFormValues = append(c.RawFormValues, s)
 			if _, ok := optionsByHTMLValue[s]; !ok {
 				c.Options = append(c.Options, &Option[T]{
 					ModelValue: item,
 					HTMLValue:  s,
-					Label:      s,
+					Label:      label,
 				})
 			}
 		}
