@@ -1,4 +1,4 @@
-// Package httpcall takes boilerplate out of typical non-streaming HTTP API calls.
+// Package httpcall takes boilerplate out of typical non-streaming single-roundtrip HTTP API calls.
 package httpcall
 
 import (
