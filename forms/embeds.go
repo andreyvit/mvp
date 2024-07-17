@@ -52,7 +52,8 @@ type Image struct {
 	Template
 	TemplateStyle
 	TagOpts
-	Src string
+	Src     string
+	SafeSrc template.URL
 }
 
 func (*Image) DefaultTemplate() string { return "embed-image" }
