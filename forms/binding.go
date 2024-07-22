@@ -361,6 +361,18 @@ func ConvertStringFields(b *Binding[[]string], sep rune) *Binding[string] {
 	}
 }
 
+func BindUniqueList[T comparable](b *Binding[[]T]) *Binding[[]T] {
+	return &Binding[[]T]{
+		Getter: b.Value,
+		Setter: func(source []T) error {
+			b.Set(uniqifyInPlace(source))
+			return nil
+		},
+		ErrSite: b.ErrSite,
+		Child:   b,
+	}
+}
+
 func ConvertStringifiedFields[T any](b *Binding[[]T], sep rune, stringify func(T) string, parse func(s string) (T, error)) *Binding[string] {
 	return ConvertStringFields(ConvertStringifiedList(b, stringify, parse), sep)
 }
