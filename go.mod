@@ -1,6 +1,6 @@
 module github.com/andreyvit/mvp
 
-go 1.20
+go 1.22
 
 require (
 	github.com/andreyvit/edb v0.1.5
