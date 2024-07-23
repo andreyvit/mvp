@@ -2,6 +2,7 @@ package forms
 
 import (
 	"html/template"
+	"strings"
 )
 
 type Template string
@@ -90,6 +91,22 @@ type HTMLFragment struct {
 func (HTMLFragment) DefaultTemplate() string { return "embed-text" }
 
 func (HTMLFragment) Finalize(state *State) {}
+
+func RawHTML(html template.HTML) Child {
+	return rawHTML{html}
+}
+
+type rawHTML struct {
+	HTML template.HTML
+}
+
+func (rawHTML) BeforeRender()             {}
+func (rawHTML) IsRenderableVisible() bool { return true }
+func (rawHTML) Finalize(state *State)     {}
+
+func (h rawHTML) RenderInto(buf *strings.Builder, r *Renderer) {
+	buf.WriteString(string(h.HTML))
+}
 
 type Link struct {
 	RenderableImpl[Link]
