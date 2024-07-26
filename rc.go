@@ -12,6 +12,7 @@ import (
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/httpcall"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 	"github.com/uptrace/bunrouter"
 )
@@ -228,6 +229,11 @@ func (rc *RC) Err() error {
 	return rc.parent.Err()
 }
 func (rc *RC) Value(key any) any {
+	if key == RCContextKey {
+		return rc
+	} else if key == AppContextKey {
+		return rc.App
+	}
 	return rc.parent.Value(key)
 }
 
@@ -247,4 +253,29 @@ func (rc *RC) RouteName() string {
 	} else {
 		return "<unknown>"
 	}
+}
+
+func (rc *RC) ConfigureHTTPRequest(r *httpcall.Request, logPrefix string) {
+	// if r.HTTPClient == nil {
+	// 	r.HTTPClient = rc.App().HTTPClient
+	// }
+	// if !opt.AllowNonIdempotentInInvisibleMode {
+	// 	r.OnShouldStart(func(r *httpcall.Request) error {
+	// 		if rc.App.Settings.Invisible && !r.IsIdempotent() {
+	// 			return fireworld.ErrReadOnly
+	// 		}
+	// 		return nil
+	// 	})
+	// }
+	r.OnStarted(func(r *httpcall.Request) {
+		rc.DoneReading()
+		flogger.Log(rc, "%s%s: %s %s: %s ...", logPrefix, r.CallID, r.Method, r.Path, r.Curl())
+	})
+	r.OnFinished(func(r *httpcall.Request) {
+		if r.Error == nil {
+			flogger.Log(rc, "%s%s -> HTTP %d [%d ms]", logPrefix, r.CallID, r.StatusCode(), r.Duration.Milliseconds())
+		} else {
+			flogger.Log(rc, "%s%s -> HTTP %d [%d ms] %s", logPrefix, r.CallID, r.StatusCode(), r.Duration.Milliseconds(), r.Error.ShortError())
+		}
+	})
 }
