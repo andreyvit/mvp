@@ -21,8 +21,9 @@ import (
 )
 
 type AppOptions struct {
-	Context context.Context
-	Logf    func(format string, v ...interface{})
+	Context       context.Context
+	Logf          func(format string, v ...interface{})
+	TestTransport http.RoundTripper
 }
 
 type AppBehaviors struct {
@@ -67,6 +68,8 @@ type App struct {
 
 	postmrk *postmark.Caller
 
+	defaultHTTPClient http.Client
+
 	rateLimiters map[RateLimitPreset]map[RateLimitGranularity]*RateLimiter
 
 	// rateLimiters map[string]
@@ -102,6 +105,8 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 	app.routesByName = make(map[string]*Route)
 	app.logf = opt.Logf
 	app.stopApp = stopApp
+	app.defaultHTTPClient.Timeout = 30 * time.Second
+	app.defaultHTTPClient.Transport = opt.TestTransport
 
 	if app.BaseURL == nil && settings.BaseURL != "" {
 		app.BaseURL = must(url.Parse(settings.BaseURL))
@@ -176,4 +181,8 @@ func (init *AppInit) MonitorDBChanges(tbl *edb.Table, flags edb.ChangeFlags) {
 		app.dbMonitoringOptions = make(map[*edb.Table]edb.ChangeFlags)
 	}
 	app.dbMonitoringOptions[tbl] |= flags | edb.ChangeFlagNotify
+}
+
+func (app *App) DefaultHTTPClient() *http.Client {
+	return &app.defaultHTTPClient
 }

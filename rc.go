@@ -256,9 +256,9 @@ func (rc *RC) RouteName() string {
 }
 
 func (rc *RC) ConfigureHTTPRequest(r *httpcall.Request, logPrefix string) {
-	// if r.HTTPClient == nil {
-	// 	r.HTTPClient = rc.App().HTTPClient
-	// }
+	if r.HTTPClient == nil {
+		r.HTTPClient = rc.App().DefaultHTTPClient()
+	}
 	// if !opt.AllowNonIdempotentInInvisibleMode {
 	// 	r.OnShouldStart(func(r *httpcall.Request) error {
 	// 		if rc.App.Settings.Invisible && !r.IsIdempotent() {
