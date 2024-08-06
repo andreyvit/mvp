@@ -81,6 +81,12 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 	m["add"] = func(a, b any) int {
 		return mvphelpers.FuzzyInt(a) + mvphelpers.FuzzyInt(b)
 	}
+	m["sub"] = func(a, b any) int {
+		return mvphelpers.FuzzyInt(a) - mvphelpers.FuzzyInt(b)
+	}
+	m["subone"] = func(n any) int {
+		return mvphelpers.FuzzyInt(n) - 1
+	}
 	m["addf"] = func(a, b any) float64 {
 		return mvphelpers.FuzzyFloat64(a) + mvphelpers.FuzzyFloat64(b)
 	}
