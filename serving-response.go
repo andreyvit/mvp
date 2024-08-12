@@ -1,9 +1,11 @@
 package mvp
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 
 	"github.com/andreyvit/mvp/flogger"
@@ -161,7 +163,13 @@ func (app *App) writeResponse(rc *RC, output any, w http.ResponseWriter, r *http
 	case ResponseHandled:
 		break
 	default:
-		panic(fmt.Errorf("%s: invalid return value %T %v", rc.Route.desc, output, output))
+		t := reflect.TypeOf(output)
+		if t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(must(json.Marshal(output)))
+		} else {
+			panic(fmt.Errorf("%s: invalid return value %T %v", rc.Route.desc, output, output))
+		}
 	}
 	return nil
 }
