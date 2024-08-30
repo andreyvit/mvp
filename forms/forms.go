@@ -287,6 +287,9 @@ func (group *Group) Finalize(state *State) {
 }
 
 func (group *Group) RenderInto(buf *strings.Builder, r *Renderer) {
+	if group.IsHidden {
+		return
+	}
 	group.InnerHTML = r.Render(group.Children)
 	for key, child := range group.Specials {
 		if group.SpecialHTML == nil {
