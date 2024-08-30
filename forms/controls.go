@@ -13,14 +13,24 @@ type Checkbox struct {
 	TagOpts
 	*Binding[bool]
 	UpdateFormOnChange bool
+	GuardOptional      bool
+	GuardIdentity      Identity
 }
 
 func (Checkbox) DefaultTemplate() string { return "control-checkbox" }
 
 func (c *Checkbox) Finalize(state *State) {
+	if c.GuardOptional {
+		state.PushName("present")
+		state.AssignIdentity(&c.GuardIdentity)
+		state.PopName()
+	}
 }
 
-func (c *Checkbox) Process(*FormData) {
+func (c *Checkbox) Process(data *FormData) {
+	if c.GuardOptional && len(data.Values[c.GuardIdentity.FullName]) == 0 {
+		return
+	}
 	c.Binding.SetString(c.RawFormValue, parseBool)
 }
 
