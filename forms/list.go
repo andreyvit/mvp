@@ -29,6 +29,7 @@ type List[T comparable] struct {
 	MinCount int
 	MaxCount int
 
+	IsReadOnly       bool
 	UseIndicesAsKeys bool
 
 	NewItem       func(name, typ string, index int) (T, bool)
@@ -69,6 +70,7 @@ func (list *List[T]) Finalize(state *State) {
 	if list.Template == "" {
 		list.Template = list.DefaultTemplate()
 	}
+	list.IsReadOnly = state.IsReadOnly()
 
 	if list.children != nil {
 		return

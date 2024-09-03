@@ -146,6 +146,7 @@ type Form struct {
 	fields    map[string]*Field
 	Multipart bool
 	URL       string
+	ReadOnly  bool
 	Group
 
 	ID     string
@@ -215,6 +216,7 @@ func (form *Form) finalize(data *FormData) {
 
 	state := State{
 		Data:          data,
+		readOnly:      form.ReadOnly,
 		path:          make([]string, 0, 10),
 		fields:        make(map[string]*Field, 100),
 		classes:       make([]map[string]string, 0, 10),

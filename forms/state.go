@@ -13,10 +13,13 @@ type Identity struct {
 type Field struct {
 	Identity
 
+	ReadOnly            bool
 	RawFormValue        string
 	RawFormValues       []string
 	RawFormValuePresent bool
 }
+
+func (field *Field) IsReadOnly() bool { return field.ReadOnly }
 
 func (field *Field) EnumFields(f func(name string, field *Field)) {
 	f("", field)
@@ -58,6 +61,7 @@ type State struct {
 	// valueValues   []any
 	classes       []map[string]string
 	classesCopied []bool
+	readOnly      bool
 }
 
 func (st *State) PushName(name string) {
@@ -176,6 +180,7 @@ func (st *State) AddField(name string, field *Field) {
 		st.PushName(name)
 	}
 	st.AssignIdentity(&field.Identity)
+	field.ReadOnly = st.readOnly
 	st.fields[field.FullName] = field
 	if name != "" {
 		st.PopName()
@@ -195,6 +200,10 @@ func (st *State) AssignIdentity(ident *Identity) {
 	if ident.FullName == "" {
 		ident.FullName = JoinNames(st.path...)
 	}
+}
+
+func (st *State) IsReadOnly() bool {
+	return st.readOnly
 }
 
 func (st *State) finalizeTree(c Child, flags ChildFlags) {
