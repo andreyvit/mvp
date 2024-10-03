@@ -63,6 +63,9 @@ func (c *InputTime) Finalize(state *State) {
 
 func (c *InputTime) Process(*FormData) {
 	c.Binding.SetString(c.RawFormValue, func(s string) (time.Time, error) {
+		if s == "" {
+			return time.Time{}, nil
+		}
 		return time.ParseInLocation(c.ValueFormat(), s, c.Location)
 	})
 }
