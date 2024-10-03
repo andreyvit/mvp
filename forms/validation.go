@@ -2,7 +2,7 @@ package forms
 
 type ErrorSite interface {
 	AddError(err error)
-	NoteChildError()
+	NoteChildError(err error)
 	Init(parent ErrorSite)
 }
 
@@ -17,15 +17,15 @@ func (errs *SingleErrorSite) AddError(err error) {
 		errs.Error = err
 		errs.ErrCount++
 		if errs.ParentErrorSite != nil {
-			errs.ParentErrorSite.NoteChildError()
+			errs.ParentErrorSite.NoteChildError(err)
 		}
 	}
 }
 
-func (errs *SingleErrorSite) NoteChildError() {
+func (errs *SingleErrorSite) NoteChildError(err error) {
 	errs.ErrCount++
 	if errs.ParentErrorSite != nil {
-		errs.ParentErrorSite.NoteChildError()
+		errs.ParentErrorSite.NoteChildError(err)
 	}
 }
 
@@ -38,6 +38,7 @@ func (errs *SingleErrorSite) Init(parent ErrorSite) { errs.ParentErrorSite = par
 
 type MultiErrorSite struct {
 	Errors          []error
+	ChildErrors     []error
 	ParentErrorSite ErrorSite
 	ErrCount        int
 	CaptureErrors   bool
@@ -51,16 +52,17 @@ func (errs *MultiErrorSite) AddError(err error) {
 		} else {
 			errs.Errors = append(errs.Errors, err)
 			if errs.ParentErrorSite != nil {
-				errs.ParentErrorSite.NoteChildError()
+				errs.ParentErrorSite.NoteChildError(err)
 			}
 		}
 	}
 }
 
-func (errs *MultiErrorSite) NoteChildError() {
+func (errs *MultiErrorSite) NoteChildError(err error) {
 	errs.ErrCount++
+	errs.ChildErrors = append(errs.ChildErrors, err)
 	if errs.ParentErrorSite != nil {
-		errs.ParentErrorSite.NoteChildError()
+		errs.ParentErrorSite.NoteChildError(err)
 	}
 }
 
