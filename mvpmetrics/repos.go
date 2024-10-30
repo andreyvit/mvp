@@ -26,13 +26,13 @@ type Metric interface {
 func (reg *Registry) Add(m Metric) {
 	name := m.Name()
 	if reg.finalized {
-		panic(fmt.Errorf("cannot add metric %s to a finalized registry"))
+		panic(fmt.Errorf("cannot add metric %s to a finalized registry", name))
 	}
 	if reg.metricsByName == nil {
 		reg.metricsByName = make(map[string]Metric)
 	}
 	if prev := reg.metricsByName[name]; prev != nil {
-		panic(fmt.Errorf("metric %s is already registered"))
+		panic(fmt.Errorf("metric %s is already registered", name))
 	}
 	reg.metricsByName[name] = m
 }
