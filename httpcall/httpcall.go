@@ -355,7 +355,7 @@ func (r *Request) doOnce() *Error {
 		} else if bytePtr, ok := r.OutputPtr.(*[]byte); ok {
 			*bytePtr = r.RawResponseBody
 		} else {
-			err := json.Unmarshal(r.RawResponseBody, r.OutputPtr)
+			err = json.Unmarshal(r.RawResponseBody, r.OutputPtr)
 			if err != nil {
 				isNetwork = (len(r.RawResponseBody) == 0 || (r.RawResponseBody[0] != '{' && r.RawResponseBody[0] != '['))
 			}
