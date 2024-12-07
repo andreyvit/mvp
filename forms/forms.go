@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"unsafe"
+
+	"golang.org/x/exp/slices"
 )
 
 type Child interface {
@@ -152,6 +154,8 @@ type Form struct {
 	ID     string
 	Turbo  bool
 	Action string
+
+	FinalActions []string
 }
 
 func (form *Form) TurboFrameID() string {
@@ -205,7 +209,7 @@ func (form *Form) Process(data *FormData) bool {
 			p.Process(data)
 		}
 	})
-	return !form.Invalid() && (form.Action == "submit")
+	return !form.Invalid() && (form.Action == "submit" || slices.Contains(form.FinalActions, form.Action))
 }
 
 func (form *Form) finalize(data *FormData) {
