@@ -393,11 +393,8 @@ func IsBrowserCripplingCrossOriginCookies(r *http.Request) bool {
 }
 func SMSLinkURI(phone, body string, ua string) string {
 	qs := PlusToPercent20(url.Values{"body": {body}}.Encode())
-	if IsAndroidUA(ua) {
-		return "sms://" + phone + "/?" + qs
-	} else {
-		return "sms://" + phone + "/&" + qs
-	}
+	// https://www.rfc-editor.org/rfc/rfc5724#section-2.2
+	return "sms:" + phone + "?" + qs
 }
 func TweetIntentURL(body string, linkURL string) string {
 	q := url.Values{
