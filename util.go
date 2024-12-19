@@ -405,8 +405,8 @@ func TweetIntentURL(body string, linkURL string) string {
 	}
 	return "https://twitter.com/intent/tweet?" + q.Encode()
 }
-func WhatsappSendURL(body string, ua string) string {
-	if IsMobileUA(ua) {
+func WhatsappSendURL(body string, mobile bool) string {
+	if mobile {
 		q := url.Values{
 			"text": {body},
 		}
@@ -418,7 +418,7 @@ func WhatsappSendURL(body string, ua string) string {
 		return "https://api.whatsapp.com/send/?" + q.Encode()
 	}
 }
-func FacebookShareLinkURL(appID, link, redirectURL string, ua string) string {
+func FacebookShareLinkURL(appID, link, redirectURL string) string {
 	q := url.Values{
 		"app_id":       {appID},
 		"link":         {link},
@@ -432,7 +432,7 @@ func FacebookShareLinkURL(appID, link, redirectURL string, ua string) string {
 	}
 	return u.String()
 }
-func FacebookMessengerSendLinkURL(appID, link, redirectURL string, ua string) string {
+func FacebookMessengerSendLinkURL(appID, link, redirectURL string) string {
 	q := url.Values{
 		"app_id":       {appID},
 		"link":         {link},
