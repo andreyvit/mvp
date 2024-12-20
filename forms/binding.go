@@ -422,6 +422,41 @@ func BindMapKeyDeletingZeros[T comparable, K comparable](m map[K]T, key K) *Bind
 	}
 }
 
+func BindMapSubmapKeyWithDefault[T comparable, K1, K2 comparable](m map[K1]map[K2]T, key K1, subkey K2, defaultValue T) *Binding[T] {
+	return &Binding[T]{
+		Getter: func() T {
+			subm, ok := m[key]
+			if !ok {
+				return defaultValue
+			}
+			value, ok := subm[subkey]
+			if !ok {
+				return defaultValue
+			}
+			return value
+		},
+		Setter: func(value T) error {
+			if value == defaultValue {
+				subm, ok := m[key]
+				if ok {
+					delete(subm, subkey)
+					if len(subm) == 0 {
+						delete(m, key)
+					}
+				}
+			} else {
+				subm, ok := m[key]
+				if !ok {
+					subm = make(map[K2]T)
+					m[key] = subm
+				}
+				subm[subkey] = value
+			}
+			return nil
+		},
+	}
+}
+
 func BindJSONObjectKeyWithDefault[T any](m map[string]any, key string, defaultValue T) *Binding[T] {
 	return &Binding[T]{
 		Getter: func() T {
