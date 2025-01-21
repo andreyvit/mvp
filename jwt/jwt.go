@@ -2,9 +2,7 @@ package jwt
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"crypto/subtle"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -30,8 +28,8 @@ type Algorithm string
 const (
 	TokenID     = "jti" // TokenID is a unique identifier for this token.
 	Issuer      = "iss" // Issuer is the principal that issued the token
-	Audience    = "aud" // Audience identifies the recipents the token is intended for
-	Subject     = "sub" // Subject is the user/account /etc that this token authorizes access to
+	Audience    = "aud" // Audience identifies the recipients the token is intended for
+	Subject     = "sub" // Subject is the user/account/etc. that this token authorizes
 	IssuedAt    = "iat" // IssuedAt is a Unix timestamp for when the token was issued
 	ExpiresAt   = "exp" // ExpiresAt is a Unix timestamp for when the token should expire
 	NotBeforeAt = "nbf" // NotBeforeAt is a timestamp this token should not be accepted until
@@ -40,17 +38,18 @@ const (
 	Typ   = "typ" // Typ is a header field that must be set to "JWT"
 	KeyID = "kid" // KeyID is a header field, an opaque string identifying the key used
 
-	Forever time.Duration = 1<<63 - 1 // Forever is validity duration of tokens that do not expire
+	Forever time.Duration = 1<<63 - 1 // Forever is a token validity that never expires
 
 	stackClaimsSpace     = 512
 	hs256SignatureEncLen = 43                                     // RawURLEncoding.EncodedLen(sha256.Size)
-	hs256Header          = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" // {"alg":"HS256","typ":"JWT"}
+	hs256Header          = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" // {"alg":"HS256","typ":"JWT"} => base64url
+	rs256Header          = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9" // {"alg":"RS256","typ":"JWT"} => base64url
 	jwtTyp               = "JWT"
 
-	HS256 Algorithm = "HS256"
-
-	MinHS256KeyLen = 32
-	MaxHS256KeyLen = 64 // anything longer is hashed to 32 bytes
+	HS256          Algorithm = "HS256"
+	RS256          Algorithm = "RS256"
+	MinHS256KeyLen           = 32
+	MaxHS256KeyLen           = 64 // anything longer is hashed to 32 bytes
 )
 
 type Claims map[string]any
@@ -127,6 +126,10 @@ func (c Claims) TokenID() string {
 	return c.String(TokenID)
 }
 
+func (c Claims) KeyID() string {
+	return c.String(KeyID)
+}
+
 func (c Claims) ValidateTime(tolerance time.Duration) error {
 	return c.ValidateTimeAt(tolerance, time.Now())
 }
@@ -151,66 +154,71 @@ type header struct {
 	KeyID string `json:"kid"`
 }
 
-func SignHS256String(claims, headerClaims Claims, key []byte) string {
-	b := SignHS256(claims, headerClaims, key, nil)
-	return unsafe.String(&b[0], len(b))
+func Sign(claims, headerClaims Claims, signer Signer) ([]byte, error) {
+	rawClaims, err := json.Marshal(claims)
+	if err != nil {
+		return nil, err
+	}
+
+	if headerClaims == nil {
+		headerClaims = make(Claims)
+	}
+	headerClaims[Typ] = jwtTyp
+	headerClaims[Alg] = signer.Algorithm()
+	if kid := signer.KeyID(); kid != "" {
+		headerClaims[KeyID] = kid
+	}
+
+	rawHeader, err := json.Marshal(headerClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	encHeader := make([]byte, base64.RawURLEncoding.EncodedLen(len(rawHeader)))
+	base64.RawURLEncoding.Encode(encHeader, rawHeader)
+
+	encClaims := make([]byte, base64.RawURLEncoding.EncodedLen(len(rawClaims)))
+	base64.RawURLEncoding.Encode(encClaims, rawClaims)
+
+	dataToSign := []byte(string(encHeader) + "." + string(encClaims))
+
+	sig, err := signer.Sign(dataToSign)
+	if err != nil {
+		return nil, err
+	}
+
+	encSig := make([]byte, base64.RawURLEncoding.EncodedLen(len(sig)))
+	base64.RawURLEncoding.Encode(encSig, sig)
+
+	token := []byte(string(dataToSign) + "." + string(encSig))
+	return token, nil
 }
 
-// SignHS256 produces a signed JWT token from the given claims.
-func SignHS256(claims, headerClaims Claims, key []byte, buf []byte) []byte {
-	if len(key) == 0 {
-		panic("missing key")
+func SignString(claims, headerClaims Claims, signer Signer) (string, error) {
+	token, err := Sign(claims, headerClaims, signer)
+	if err != nil {
+		return "", err
 	}
-	rawClaims, err := json.Marshal(claims)
+	return unsafe.String(&token[0], len(token)), nil
+}
+
+func SignHS256String(claims, headerClaims Claims, key []byte) string {
+	token, err := SignString(claims, headerClaims, NewHS256Signer(key, claims.KeyID()))
 	if err != nil {
 		panic(err)
 	}
-	var rawHeader []byte
-	if headerClaims != nil {
-		headerClaims[Typ] = jwtTyp
-		headerClaims[Alg] = string(HS256)
-		rawHeader, err = json.Marshal(headerClaims)
-		if err != nil {
-			panic(err)
-		}
-		rawHeader = []byte(base64.RawURLEncoding.EncodeToString(rawHeader))
-	}
-	return SignHS256Raw(rawClaims, rawHeader, key, buf)
+	return token
 }
 
-// SignHS256Raw produces a signed JWT token from the given raw claims.
-func SignHS256Raw(claims, header []byte, key []byte, buf []byte) []byte {
-	headerLen := len(header)
-	if headerLen == 0 {
-		headerLen = len(hs256Header)
+func SignRS25String(claims, headerClaims Claims, key *rsa.PrivateKey) string {
+	token, err := SignString(claims, headerClaims, NewRS256Signer(key, claims.KeyID()))
+	if err != nil {
+		panic(err)
 	}
-
-	claimLen := base64.RawURLEncoding.EncodedLen(len(claims))
-	tokenLen := headerLen + 1 + claimLen + 1 + hs256SignatureEncLen
-
-	if len(buf) < tokenLen {
-		buf = make([]byte, tokenLen)
-	}
-
-	if len(header) == 0 {
-		copy(buf, hs256Header)
-	} else {
-		copy(buf, header)
-	}
-	buf[headerLen] = '.'
-	base64.RawURLEncoding.Encode(buf[headerLen+1:], claims)
-
-	var hash [sha256.Size]byte
-	alg := hmac.New(sha256.New, key)
-	alg.Write(buf[:headerLen+1+claimLen])
-	alg.Sum(hash[:0])
-
-	buf[headerLen+1+claimLen] = '.'
-	base64.RawURLEncoding.Encode(buf[headerLen+1+claimLen+1:], hash[:])
-	return buf
+	return token
 }
 
-// Token is a result of parsing a JWT token.
+// Token is the result of parsing a JWT token.
 type Token struct {
 	claims     Claims
 	alg        Algorithm
@@ -231,7 +239,7 @@ func (t *Token) KeyID() string {
 	if t.keyID != "" {
 		return t.keyID
 	}
-	return t.claims.String(KeyID)
+	return t.claims.KeyID()
 }
 
 // ParseString decodes JWT parts of a token.
@@ -248,23 +256,83 @@ func Parse(rawToken []byte) (Token, error) {
 	return token, err
 }
 
+// ValidateWith verifies that this token’s algorithm matches the verifier,
+// then checks the signature with verifier.Verify().
+func (t *Token) ValidateWith(verifier Verifier) error {
+	if t.alg != verifier.Algorithm() {
+		return ErrAlg
+	}
+	if base64.RawURLEncoding.DecodedLen(len(t.sig)) != verifier.SigLen() {
+		return ErrSignatureCorrupted
+	}
+	rawSig := make([]byte, verifier.SigLen())
+	n, err := base64.RawURLEncoding.Decode(rawSig, t.sig)
+	if err != nil || n != len(rawSig) {
+		return ErrSignatureCorrupted
+	}
+
+	err = verifier.Verify(t.dataToSign, rawSig[:n])
+	if err != nil {
+		return err // e.g. ErrSignature
+	}
+	return nil
+}
+
+func (token *Token) ValidateHS256(key []byte) error {
+	return token.ValidateWith(NewHS256Verifier(key, token.KeyID()))
+}
+
+func (token *Token) ValidateRS256(key *rsa.PublicKey) error {
+	return token.ValidateWith(NewRS256Verifier(key, token.KeyID()))
+}
+
+func DecodeStringAt(
+	rawToken string,
+	verifier Verifier,
+	tolerance time.Duration,
+	now time.Time,
+) (Claims, error) {
+	var token Token
+	if err := token.ParseString(rawToken); err != nil {
+		return nil, err
+	}
+
+	if err := token.ValidateWith(verifier); err != nil {
+		return nil, err
+	}
+
+	claims := token.Claims()
+	if err := claims.ValidateTimeAt(tolerance, now); err != nil {
+		return nil, err
+	}
+
+	return claims, nil
+}
+
 func DecodeHS256String(rawToken string, tolerance time.Duration, key []byte) (Claims, error) {
 	return DecodeHS256StringAt(rawToken, key, tolerance, time.Now())
 }
 
-func DecodeHS256StringAt(rawToken string, key []byte, tolerance time.Duration, now time.Time) (Claims, error) {
-	var token Token
-	err := token.ParseString(rawToken)
-	if err != nil {
-		return nil, err
-	}
-	err = token.ValidateHS256(key)
-	if err != nil {
-		return nil, err
-	}
-	c := token.Claims()
-	err = c.ValidateTimeAt(tolerance, now)
-	return c, err
+func DecodeHS256StringAt(
+	rawToken string,
+	key []byte,
+	tolerance time.Duration,
+	now time.Time,
+) (Claims, error) {
+	return DecodeStringAt(rawToken, NewHS256Verifier(key, ""), tolerance, now)
+}
+
+func DecodeRS256String(rawToken string, tolerance time.Duration, pubKey *rsa.PublicKey) (Claims, error) {
+	return DecodeRS256StringAt(rawToken, pubKey, tolerance, time.Now())
+}
+
+func DecodeRS256StringAt(
+	rawToken string,
+	pubKey *rsa.PublicKey,
+	tolerance time.Duration,
+	now time.Time,
+) (Claims, error) {
+	return DecodeStringAt(rawToken, NewRS256Verifier(pubKey, ""), tolerance, now)
 }
 
 // ParseString decodes JWT parts of a token.
@@ -288,9 +356,12 @@ func (token *Token) Parse(rawToken []byte) error {
 	}
 	i2 += i1 + 1
 
+	// Header part
 	h := rawToken[:i1]
 	if string(h) == hs256Header {
 		token.alg = HS256
+	} else if string(h) == rs256Header {
+		token.alg = RS256
 	} else {
 		dbuf := make([]byte, base64.RawURLEncoding.DecodedLen(len(h)))
 		n, err := base64.RawURLEncoding.Decode(dbuf, h)
@@ -311,6 +382,7 @@ func (token *Token) Parse(rawToken []byte) error {
 	token.sig = rawToken[i2+1:]
 	token.dataToSign = rawToken[:i2]
 
+	// Claims part
 	c := make(Claims, ExpectedClaimCount)
 	{
 		raw := rawToken[i1+1 : i2]
@@ -324,64 +396,17 @@ func (token *Token) Parse(rawToken []byte) error {
 		} else {
 			buf = make([]byte, n)
 		}
-
-		// log.Printf("RawToken = %q", raw)
-
 		n, err := base64.RawURLEncoding.Decode(buf, raw)
 		if err != nil {
 			return ErrCorrupted
 		}
-
-		// log.Printf("JSONToken = %s", buf[:n])
-
 		dec := json.NewDecoder(bytes.NewReader(buf[:n]))
 		dec.UseNumber()
 		err = dec.Decode(&c)
 		if err != nil {
-			// log.Printf("JSON err: %v", err)
 			return ErrCorrupted
 		}
 	}
 	token.claims = c
-	return nil
-}
-
-func (token *Token) Validate(alg Algorithm, key []byte) error {
-	switch alg {
-	case HS256:
-		return token.ValidateHS256(key)
-	default:
-		panic("unsupported algorithm")
-	}
-}
-
-func (token *Token) ValidateHS256(key []byte) error {
-	if len(key) == 0 {
-		panic("missing key")
-	}
-	if token.alg != HS256 {
-		return ErrAlg
-	}
-	var actualHash, expectedHash [sha256.Size]byte
-	if base64.RawURLEncoding.DecodedLen(len(token.sig)) != len(actualHash) {
-		// log.Printf("base64.RawURLEncoding.DecodedLen(len(token.sig)) %d != len(actualHash) %d", base64.RawURLEncoding.DecodedLen(len(token.sig)), len(actualHash))
-		return ErrSignatureCorrupted
-	}
-	n, err := base64.RawURLEncoding.Decode(actualHash[:], token.sig)
-	if err != nil || n != len(actualHash) {
-		return ErrSignatureCorrupted
-	}
-
-	alg := hmac.New(sha256.New, key)
-	alg.Write(token.dataToSign)
-	alg.Sum(expectedHash[:0])
-
-	// log.Printf("StringToSign = %q", token[:i2])
-	// log.Printf("expectedHash = %q", base64.RawURLEncoding.EncodeToString(expectedHash[:]))
-	// log.Printf("actualHash = %q", base64.RawURLEncoding.EncodeToString(actualHash[:]))
-
-	if 1 != subtle.ConstantTimeCompare(actualHash[:], expectedHash[:]) {
-		return ErrSignature
-	}
 	return nil
 }
