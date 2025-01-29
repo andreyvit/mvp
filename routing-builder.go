@@ -9,8 +9,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/andreyvit/mvp/cors"
 	"github.com/andreyvit/mvp/httperrors"
+	"github.com/andreyvit/mvp/mvphttp"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
+	"github.com/andreyvit/mvp/mvpstatics"
 	"github.com/andreyvit/mvp/mvputil"
 	"github.com/uptrace/bunrouter"
 	"golang.org/x/exp/maps"
@@ -58,8 +61,8 @@ func (g *RouteBuilder) Group(path string, f func(b *RouteBuilder)) {
 	f(&sg)
 }
 
-func (g *RouteBuilder) Static(path string) {
-	setupStaticServer(g.bg, path, g.app.staticFS)
+func (g *RouteBuilder) Static(path string, cm mvphttp.CacheMode, cors *cors.CORS) {
+	mvpstatics.SetupRoute(g.bg, path, g.app.staticFS, cm, cors)
 }
 
 // Route defines a named route. methodAndPath are space-separated.

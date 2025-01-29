@@ -113,32 +113,6 @@ func WriteFileAtomic(path string, data []byte, perm fs.FileMode) (err error) {
 	return nil
 }
 
-const (
-	CacheControlHeader          = "Cache-Control"
-	CacheControlUncachable      = "no-cache, no-store, no-transform, must-revalidate, private, max-age=0"
-	CacheControlPublicImmutable = "public, max-age=31536000, immutable"
-	CacheControlPublicMutable   = "public, no-cache, max-age=0"
-	CacheControlPrivateMutable  = "private, no-cache, max-age=0"
-)
-
-func DisableCaching(w http.ResponseWriter) {
-	w.Header().Set("Expires", "Thu, 01 Jan 1970 00:00:00 UTC")
-	w.Header().Set(CacheControlHeader, CacheControlUncachable)
-	w.Header().Set("Pragma", "no-cache")
-}
-
-func MarkPublicImmutable(w http.ResponseWriter) {
-	w.Header().Set(CacheControlHeader, CacheControlPublicImmutable)
-}
-
-func MarkPublicMutable(w http.ResponseWriter) {
-	w.Header().Set(CacheControlHeader, CacheControlPublicMutable)
-}
-
-func MarkPrivateMutable(w http.ResponseWriter) {
-	w.Header().Set(CacheControlHeader, CacheControlPrivateMutable)
-}
-
 func DetermineMIMEType(r *http.Request) string {
 	s := r.Header.Get("Content-Type")
 	if s == "" {

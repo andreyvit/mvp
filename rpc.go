@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/andreyvit/mvp/httperrors"
+	"github.com/andreyvit/mvp/mvphttp"
 )
 
 func ReadAPIRequest(r *http.Request, in any) error {
@@ -40,7 +41,7 @@ func (app *App) WriteAPIError(w http.ResponseWriter, err error) {
 	resp := BuildAPIErrorResponse(err)
 	data := must(json.Marshal(resp))
 
-	DisableCaching(w)
+	mvphttp.ApplyCacheMode(w, mvphttp.Uncached)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(resp.HTTPCode())
@@ -48,7 +49,7 @@ func (app *App) WriteAPIError(w http.ResponseWriter, err error) {
 }
 
 func WriteAPIResponse(w http.ResponseWriter, out any, indented bool) {
-	DisableCaching(w)
+	mvphttp.ApplyCacheMode(w, mvphttp.Uncached)
 	w.Header().Set("Content-Type", "application/json")
 	var err error
 	if indented {

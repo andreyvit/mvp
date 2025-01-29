@@ -7,17 +7,18 @@ import (
 
 	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/httperrors"
+	"github.com/andreyvit/mvp/mvphttp"
 )
 
 func WritePlainError(w http.ResponseWriter, err error) {
 	code := httperrors.HTTPCode(err)
 	message := httperrors.HTTPMessage(err)
-	DisableCaching(w)
+	mvphttp.ApplyCacheMode(w, mvphttp.Uncached)
 	http.Error(w, message, code)
 }
 
 func WriteMethodNotAllowed(w http.ResponseWriter) {
-	DisableCaching(w)
+	mvphttp.ApplyCacheMode(w, mvphttp.Uncached)
 	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 }
 
