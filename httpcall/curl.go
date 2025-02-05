@@ -18,29 +18,29 @@ func (r *Request) Curl() string {
 	for k, vv := range r.HTTPRequest.Header {
 		for _, v := range vv {
 			buf.WriteString(" -H ")
-			buf.WriteString(shellQuote(k + ": " + v))
+			buf.WriteString(ShellQuote(k + ": " + v))
 		}
 	}
 	if r.Input == nil && len(r.RawRequestBody) > 0 {
 		buf.WriteString(" -d ")
-		buf.WriteString(shellQuote(string(r.RawRequestBody)))
+		buf.WriteString(ShellQuote(string(r.RawRequestBody)))
 	} else if bodyValues, ok := r.Input.(url.Values); ok {
 		for k, vv := range bodyValues {
 			for _, v := range vv {
 				buf.WriteString(" -d ")
-				buf.WriteString(shellQuote(k + "=" + v))
+				buf.WriteString(ShellQuote(k + "=" + v))
 			}
 		}
 	} else if len(r.RawRequestBody) > 0 {
 		buf.WriteString(" -d ")
-		buf.WriteString(shellQuote(string(r.RawRequestBody)))
+		buf.WriteString(ShellQuote(string(r.RawRequestBody)))
 	}
 	buf.WriteString(" ")
-	buf.WriteString(shellQuote(r.HTTPRequest.URL.String()))
+	buf.WriteString(ShellQuote(r.HTTPRequest.URL.String()))
 	return buf.String()
 }
 
-func shellQuote(source string) string {
+func ShellQuote(source string) string {
 	const specialChars = "\\'\"`${[|&;<>()*?! \t\n~"
 	const specialInDouble = "$\\\"!"
 
