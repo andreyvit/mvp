@@ -180,7 +180,7 @@ func (st *State) AddField(name string, field *Field) {
 		st.PushName(name)
 	}
 	st.AssignIdentity(&field.Identity)
-	field.ReadOnly = st.readOnly
+	field.ReadOnly = field.ReadOnly || st.readOnly
 	st.fields[field.FullName] = field
 	if name != "" {
 		st.PopName()
