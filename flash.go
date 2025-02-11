@@ -116,6 +116,7 @@ func RawNeutralMsg(text string) *Msg {
 type Flash struct {
 	Msg          *Msg           `json:"m,omitempty"`
 	Action       string         `json:"a,omitempty"`
+	Target       string         `json:"t,omitempty"`
 	ScrollTarget string         `json:"s,omitempty"`
 	Extras       map[string]any `json:"e,omitempty"`
 }
