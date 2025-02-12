@@ -65,6 +65,11 @@ type PublicMessenger interface {
 	PublicError() string
 }
 
+type ExtraCarrier interface {
+	Extra(k string, v interface{}) *Error
+	ForeachExtra(f func(k string, v interface{}))
+}
+
 type BaseError struct {
 	id         string
 	statusCode int
