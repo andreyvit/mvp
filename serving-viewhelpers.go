@@ -126,12 +126,14 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 		return fmt.Sprintf("%T %v", v, v)
 	}
 	m["fallback"] = func(values ...any) any {
+		var last any
 		for _, v := range values {
 			if mvphelpers.FuzzyBool(v) {
 				return v
 			}
+			last = v
 		}
-		return nil
+		return last
 	}
 	m["fallback_if_nil"] = func(values ...any) any {
 		for _, v := range values {
