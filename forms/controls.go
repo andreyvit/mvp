@@ -39,6 +39,13 @@ type CheckboxWithLabel struct {
 	Label any
 }
 
+func (impl *CheckboxWithLabel) WithUpdater(f func(*CheckboxWithLabel)) *CheckboxWithLabel {
+	impl.updater = func(*Checkbox) {
+		f(impl)
+	}
+	return impl
+}
+
 func (CheckboxWithLabel) DefaultTemplate() string { return "control-checkbox-labeled" }
 
 type InputWellOpts struct {
