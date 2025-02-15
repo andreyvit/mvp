@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"maps"
 	"net/http"
@@ -195,13 +196,21 @@ func (r *Request) Init() {
 		}
 
 		var urlStr string
-		if r.FullURLOverride != "" {
+		if r.FullURLOverride != "" && strings.Contains(r.FullURLOverride, "://") {
 			urlStr = r.FullURLOverride
 		} else {
 			if r.BaseURL == "" && r.Path == "" {
 				panic("BaseURL and/or Path must be specified (or HTTPRequest)")
 			}
-			urlStr = buildURL(r.BaseURL, r.Path, r.QueryParams).String()
+			u := buildURL(r.BaseURL, r.Path, r.QueryParams)
+			if r.FullURLOverride != "" {
+				if strings.HasPrefix(r.FullURLOverride, "/") {
+					u.Path = r.FullURLOverride
+				} else {
+					panic(fmt.Errorf("FullURLOverride is not absolute and does not start with a slash: %q", r.FullURLOverride))
+				}
+			}
+			urlStr = u.String()
 		}
 
 		if r.Method == "" {
