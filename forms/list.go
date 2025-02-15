@@ -262,18 +262,32 @@ func (list *List[T]) EnumChildren(f func(Child, ChildFlags)) {
 	}
 }
 
-func (list *List[T]) ShouldProcessChild(data *FormData, child Child) bool {
-	return false
-}
-
-func (list *List[T]) Process(fd *FormData) {
+func (list *List[T]) Process(data *FormData) {
 	if list.Sort != nil {
 		list.Sort(list.items)
 	}
 	list.Binding.Set(list.items)
+	walk(list.children, ChildFlagSkipProcessing, func(c Child) {
+		if p, ok := c.(PreProcessor); ok {
+			p.PreProcess(data)
+		}
+	}, func(c Child) {
+		if p, ok := c.(Processor); ok {
+			p.Process(data)
+		}
+	})
 }
 
 func (list *List[T]) RenderInto(buf *strings.Builder, r *Renderer) {
 	list.InnerHTML = r.Render(list.children)
 	r.RenderWrapperTemplateInto(buf, list.Template, list, list.InnerHTML)
+}
+
+func (list *List[T]) BeforeRender() {
+	list.EnumChildren(func(c Child, cf ChildFlags) {
+		if c, ok := c.(Renderable); ok {
+			c.BeforeRender()
+		}
+	})
+	list.RenderableImpl.BeforeRender()
 }
