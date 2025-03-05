@@ -167,7 +167,7 @@ func (form *Form) TurboFrameID() string {
 }
 
 func (form *Form) Render(r *Renderer) template.HTML {
-	form.finalize(nil)
+	form.FinalizeForm(nil)
 	return r.Render(&form.Group)
 }
 
@@ -190,7 +190,7 @@ func (form *Form) Process(data *FormData) bool {
 	}
 	form.Action = data.Action
 
-	form.finalize(data)
+	form.FinalizeForm(data)
 	for name, field := range form.fields {
 		field.RawFormValues = data.Values[name]
 		field.RawFormValue = ""
@@ -212,7 +212,7 @@ func (form *Form) Process(data *FormData) bool {
 	return !form.Invalid() && (form.Action == "submit" || slices.Contains(form.FinalActions, form.Action))
 }
 
-func (form *Form) finalize(data *FormData) {
+func (form *Form) FinalizeForm(data *FormData) {
 	if form.finalized {
 		return
 	}
