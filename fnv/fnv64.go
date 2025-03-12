@@ -130,6 +130,10 @@ func (s *Hash64) WriteStringZ(str string) {
 	s.WriteZero()
 }
 
+func (s Hash64) Downmix8() uint8 {
+	return uint8(s>>56) ^ uint8(s>>48) ^ uint8(s>>40) ^ uint8(s>>32) ^ uint8(s>>24) ^ uint8(s>>16) ^ uint8(s>>8) ^ uint8(s)
+}
+
 func (s Hash64) Downmix16() uint16 {
 	return uint16(s>>48) ^ uint16(s>>32) ^ uint16(s>>16) ^ uint16(s)
 }
