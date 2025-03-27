@@ -22,4 +22,11 @@ func SetupRoute(g *bunrouter.Group, urlPrefix string, f fs.FS, cm mvphttp.CacheM
 		h.ServeHTTP(w, req.Request)
 		return nil
 	})
+
+	if cors != nil {
+		g.OPTIONS(urlPrefix+"/*path", func(w http.ResponseWriter, req bunrouter.Request) error {
+			h.ServeHTTP(w, req.Request)
+			return nil
+		})
+	}
 }
