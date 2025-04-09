@@ -14,6 +14,7 @@ func FuncMap() template.FuncMap {
 		"is_even":      IsEven,
 		"is_odd":       IsOdd,
 		"dict":         Dict,
+		"strdict":      StrDict,
 		"jsondict":     JSONDict,
 		"list":         List,
 		"subst":        Subst,
