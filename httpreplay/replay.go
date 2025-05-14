@@ -10,6 +10,8 @@ import (
 	"runtime/debug"
 	"strings"
 	"testing"
+
+	"github.com/andreyvit/jsondiff"
 )
 
 type ExpectedCall struct {
@@ -118,7 +120,7 @@ func errorResponse(status int) *http.Response {
 
 func assertJSONRequestBody(t testing.TB, actual io.ReadCloser, expected string) {
 	t.Helper()
-	var actualJSON, expectedJSON interface{}
+	var actualJSON, expectedJSON any
 	err := json.Unmarshal([]byte(expected), &expectedJSON)
 	if err != nil {
 		panic(err)
@@ -128,6 +130,12 @@ func assertJSONRequestBody(t testing.TB, actual io.ReadCloser, expected string) 
 		panic(err)
 	}
 	if a, e := actualJSON, expectedJSON; !reflect.DeepEqual(a, e) {
-		t.Errorf("*** request body = %v, wanted %v", a, e)
+		var diff string
+		if ao, ok := a.(map[string]any); ok {
+			if eo, ok := e.(map[string]any); ok {
+				diff = jsondiff.CompareObjects(eo, ao).Format(eo, jsondiff.HideUnchangedProperties)
+			}
+		}
+		t.Errorf("*** request body = %v, wanted %v\ndiff:\n%s", a, e, diff)
 	}
 }
