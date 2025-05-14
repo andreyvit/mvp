@@ -363,7 +363,7 @@ func IsSafariRequest(r *http.Request) bool {
 	return IsSafariUA(r.Header.Get("User-Agent"))
 }
 func IsBrowserCripplingCrossOriginCookies(r *http.Request) bool {
-	return IsSafariRequest(r)
+	return IsSafariRequest(r) || r.Header.Get("DNT") == "1"
 }
 func SMSLinkURI(phone, body string, ua string) string {
 	qs := PlusToPercent20(url.Values{"body": {body}}.Encode())
