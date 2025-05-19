@@ -4,6 +4,8 @@ github.com/andreyvit/httpform v0.1.8 h1:1jUTIBAct5eEABl04HTlntx0k0I0dTO6IPIo/p80
 github.com/andreyvit/httpform v0.1.8/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5 h1:0ZOOtzyfCmLo7uC4L5T0RQz1KfnO1CgloBiyVzpYP7Y=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5/go.mod h1:EB1+OF1waj9wGowDE1XqHLmET8vq9dsEc/exB3gKlgI=
+github.com/andreyvit/jsondiff v1.1.0 h1:L2wSysWQqcK1DGwqIrpX1fVcBx/V0KwCZooFuLPIHh8=
+github.com/andreyvit/jsondiff v1.1.0/go.mod h1:sLdf1oZ+09IQNXLL84NJ2ta/zzr5UHDcg2STwKIBys8=
 github.com/andreyvit/jsonfix v1.0.0 h1:S5BFMo08D6Uh3mnxtR8/Mtu+uzREQqgVplpZUI1wuXs=
 github.com/andreyvit/jsonfix v1.0.0/go.mod h1:D+50dQUMcVE3/aO6IUkCiqYc44JrYPlJpdBGxVqiBhQ=
 github.com/andreyvit/minicomponents v0.3.3 h1:fuPTGdYnBtfhdXadXoIxWnpMnkp0zVJYvXeQ/h5EiTc=
