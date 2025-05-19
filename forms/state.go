@@ -242,7 +242,7 @@ func (st *State) finalizeTree(c Child, flags ChildFlags) {
 func joinClasses(prev, next string) string {
 	prev = strings.TrimSpace(prev)
 	next = strings.TrimSpace(next)
-	if next, ok := strings.CutPrefix(next, "+ "); ok {
+	if next, ok := strings.CutPrefix(next, "... "); ok {
 		next = strings.TrimSpace(next)
 		if prev != "" && next != "" {
 			return prev + " " + next
