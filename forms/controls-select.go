@@ -22,6 +22,7 @@ type Select[T comparable] struct {
 	Required           bool
 	UpdateFormOnChange bool
 	Options            []*Option[T]
+	OptionsFunc        func() []*Option[T]
 }
 
 func (Select[T]) IsMultiSelect() bool     { return false }
@@ -41,6 +42,9 @@ func (c *Select[T]) Finalize(state *State) {
 }
 
 func (c *Select[T]) Process(*FormData) {
+	if c.OptionsFunc != nil {
+		c.Options = c.OptionsFunc()
+	}
 	opt := c.OptionByHTMLValue(c.RawFormValue)
 	if opt != nil {
 		c.Binding.Set(opt.ModelValue)
@@ -63,6 +67,13 @@ func (c *Select[T]) OptionByHTMLValue(value string) *Option[T] {
 		}
 	}
 	return nil
+}
+
+func (c *Select[T]) BeforeRender() {
+	if c.OptionsFunc != nil {
+		c.Options = c.OptionsFunc()
+	}
+	c.RenderableImpl.BeforeRender()
 }
 
 type RawSelect[T comparable] struct {
