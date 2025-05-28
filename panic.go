@@ -70,6 +70,25 @@ func SafeCall(f func() error) (err error) {
 	}()
 	return f()
 }
+
+func SafeCall1[A1 any](f func(a1 A1) error, a1 A1) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = NewPanic(p)
+		}
+	}()
+	return f(a1)
+}
+
+func SafeCall2[A1, A2 any](f func(a1 A1, a2 A2) error, a1 A1, a2 A2) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = NewPanic(p)
+		}
+	}()
+	return f(a1, a2)
+}
+
 func SafeCall01[R1 any](f func() (R1, error)) (r1 R1, err error) {
 	defer func() {
 		if p := recover(); p != nil {
@@ -78,6 +97,7 @@ func SafeCall01[R1 any](f func() (R1, error)) (r1 R1, err error) {
 	}()
 	return f()
 }
+
 func SafeCall11[A1, R1 any](f func(a1 A1) (R1, error), a1 A1) (r1 R1, err error) {
 	defer func() {
 		if p := recover(); p != nil {
@@ -86,6 +106,7 @@ func SafeCall11[A1, R1 any](f func(a1 A1) (R1, error), a1 A1) (r1 R1, err error)
 	}()
 	return f(a1)
 }
+
 func SafeCall21[A1, A2, R1 any](f func(a1 A1, a2 A2) (R1, error), a1 A1, a2 A2) (r1 R1, err error) {
 	defer func() {
 		if p := recover(); p != nil {
