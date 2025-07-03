@@ -163,6 +163,10 @@ func (id *ID) UnmarshalJSON(input []byte) error {
 		*id = 0
 		return nil
 	}
+	if n == 3 && string(input) == `"0"` {
+		*id = 0
+		return nil
+	}
 	if n != 18 || input[0] != '"' || input[17] != '"' {
 		*id = 0
 		return ErrInvalid
