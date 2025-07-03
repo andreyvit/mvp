@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/subtle"
 )
 
@@ -94,6 +95,49 @@ func (v *RS256Verifier) Verify(data, signature []byte) error {
 	h := sha256.Sum256(data)
 	err := rsa.VerifyPKCS1v15(v.pubKey, crypto.SHA256, h[:], signature)
 	if err != nil {
+		return ErrSignature
+	}
+	return nil
+}
+
+// ----------------------------------------------------------------------------
+// HS512 Verifier
+// ----------------------------------------------------------------------------
+
+type HS512Verifier struct {
+	key   []byte
+	keyID string
+}
+
+// NewHS512Verifier constructs an HS512 verifier with the given secret `key` and optional `keyID`.
+func NewHS512Verifier(key []byte, keyID string) *HS512Verifier {
+	if len(key) == 0 {
+		panic("HS512Verifier: key cannot be empty")
+	}
+	return &HS512Verifier{key: key, keyID: keyID}
+}
+
+func (v *HS512Verifier) Algorithm() Algorithm {
+	return HS512
+}
+
+func (v *HS512Verifier) KeyID() string {
+	return v.keyID
+}
+
+func (v *HS512Verifier) SigLen() int {
+	return sha512.Size
+}
+
+// Verify checks that `signature` (raw bytes) matches the HMAC-SHA512 of `data`.
+func (v *HS512Verifier) Verify(data, signature []byte) error {
+	// Recompute the HMAC-SHA512 of data
+	mac := hmac.New(sha512.New, v.key)
+	mac.Write(data)
+	expected := mac.Sum(nil)
+
+	// Compare the provided signature to what we expect
+	if subtle.ConstantTimeCompare(signature, expected) != 1 {
 		return ErrSignature
 	}
 	return nil

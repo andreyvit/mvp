@@ -47,6 +47,7 @@ const (
 	jwtTyp               = "JWT"
 
 	HS256          Algorithm = "HS256"
+	HS512          Algorithm = "HS512"
 	RS256          Algorithm = "RS256"
 	MinHS256KeyLen           = 32
 	MaxHS256KeyLen           = 64 // anything longer is hashed to 32 bytes
