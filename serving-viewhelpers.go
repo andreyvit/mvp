@@ -32,14 +32,17 @@ func RegisterBuiltinUtilityViewHelpers(m template.FuncMap) {
 			return falseVal
 		}
 	}
-	m["repeat"] = func(n int) []int {
-		r := make([]int, 0, n)
-		for i := 1; i <= n; i++ {
+	m["repeat"] = func(n any) []int {
+		end := mvphelpers.FuzzyInt(n)
+		r := make([]int, 0, end)
+		for i := 1; i <= end; i++ {
 			r = append(r, i)
 		}
 		return r
 	}
-	m["repeat_fromto"] = func(start, end int) []int {
+	m["repeat_fromto"] = func(from, to any) []int {
+		start := mvphelpers.FuzzyInt(from)
+		end := mvphelpers.FuzzyInt(to)
 		if end < start {
 			return nil
 		}
