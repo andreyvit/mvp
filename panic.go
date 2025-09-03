@@ -49,6 +49,13 @@ func (p *Panic) Unwrap() error {
 	return p.cause
 }
 
+func (p *Panic) Stack() []byte {
+	if p.stack == nil {
+		return nil
+	}
+	return p.stack
+}
+
 var skipPanicStackDetectors = []func(error) bool{
 	func(err error) bool {
 		if e, ok := err.(SkipStackOnPanic); ok {
