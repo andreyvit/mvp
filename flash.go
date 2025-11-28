@@ -134,6 +134,19 @@ func (flash *Flash) ScrollTo(id string) *Flash {
 	return flash
 }
 
+func (flash *Flash) WithTarget(target string) *Flash {
+	flash.Target = target
+	return flash
+}
+
+func (flash *Flash) WithExtra(key string, value any) *Flash {
+	if flash.Extras == nil {
+		flash.Extras = make(map[string]any)
+	}
+	flash.Extras[key] = value
+	return flash
+}
+
 func (flash *Flash) JSONBytes() []byte {
 	if flash == nil {
 		return nil
