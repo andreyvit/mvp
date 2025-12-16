@@ -93,6 +93,9 @@ type RawOutput struct {
 	Header      http.Header
 }
 
+// EmptyResponse means just return given status code, no body
+type EmptyResponse int
+
 // DebugOutput can be returned by request handlers
 type DebugOutput string
 
