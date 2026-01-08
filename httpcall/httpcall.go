@@ -67,6 +67,8 @@ type (
 		Error           *Error
 		Duration        time.Duration
 
+		DoNotLogRequestBody bool
+
 		initDone bool
 	}
 

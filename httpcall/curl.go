@@ -21,20 +21,27 @@ func (r *Request) Curl() string {
 			buf.WriteString(ShellQuote(k + ": " + v))
 		}
 	}
-	if r.Input == nil && len(r.RawRequestBody) > 0 {
-		buf.WriteString(" -d ")
-		buf.WriteString(ShellQuote(string(r.RawRequestBody)))
-	} else if bodyValues, ok := r.Input.(url.Values); ok {
-		for k, vv := range bodyValues {
-			for _, v := range vv {
-				buf.WriteString(" -d ")
-				buf.WriteString(ShellQuote(k + "=" + v))
-			}
+	if r.DoNotLogRequestBody {
+		if r.Input != nil || len(r.RawRequestBody) > 0 {
+		    buf.WriteString(" -d '<request-body-omitted>'")
 		}
-	} else if len(r.RawRequestBody) > 0 {
-		buf.WriteString(" -d ")
-		buf.WriteString(ShellQuote(string(r.RawRequestBody)))
+	} else {
+		if r.Input == nil && len(r.RawRequestBody) > 0 {
+			buf.WriteString(" -d ")
+			buf.WriteString(ShellQuote(string(r.RawRequestBody)))
+		} else if bodyValues, ok := r.Input.(url.Values); ok {
+			for k, vv := range bodyValues {
+				for _, v := range vv {
+					buf.WriteString(" -d ")
+					buf.WriteString(ShellQuote(k + "=" + v))
+				}
+			}
+		} else if len(r.RawRequestBody) > 0 {
+			buf.WriteString(" -d ")
+			buf.WriteString(ShellQuote(string(r.RawRequestBody)))
+		}
 	}
+
 	buf.WriteString(" ")
 	buf.WriteString(ShellQuote(r.HTTPRequest.URL.String()))
 	return buf.String()
