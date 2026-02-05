@@ -192,12 +192,14 @@ func (form *Form) Process(data *FormData) bool {
 
 	form.FinalizeForm(data)
 	for name, field := range form.fields {
-		field.RawFormValues = data.Values[name]
-		field.RawFormValue = ""
-		field.RawFormValuePresent = false
-		for _, v := range field.RawFormValues {
-			field.RawFormValue = v
-			field.RawFormValuePresent = true
+		if values, exists := data.Values[name]; exists {
+			field.RawFormValues = values
+			field.RawFormValue = ""
+			field.RawFormValuePresent = false
+			for _, v := range values {
+				field.RawFormValue = v
+				field.RawFormValuePresent = true
+			}
 		}
 	}
 	walk(&form.Group, ChildFlagSkipProcessing, func(c Child) {
