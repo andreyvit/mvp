@@ -22,7 +22,8 @@ func (cm StandardCacheMode) EnumCacheHeaders(f func(key, value string)) {
 		break
 	case Uncached:
 		f("Expires", "Thu, 01 Jan 1970 00:00:00 UTC")
-		f("Cache-Control", "no-cache, no-store, no-transform, must-revalidate, private, max-age=0")
+		// NOTE (@seletskiy): No 'no-transform' here! It would prevent loseless transfer compression by Caddy.
+		f("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0")
 		f("Pragma", "no-cache")
 	case PrivateMutable:
 		f("Cache-Control", "private, no-cache, max-age=0")
