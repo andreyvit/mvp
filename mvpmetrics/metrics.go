@@ -21,6 +21,10 @@ func (d *desc) Name() string {
 	return d.name
 }
 
+func (d *desc) LabelNames() []string {
+	return d.labelNames
+}
+
 func (d *desc) verifyCorrectLabels(labelValues []string) {
 	if len(labelValues) != len(d.labelNames) {
 		panic(fmt.Errorf("invalid number of label values, got %d, wanted %d", len(labelValues), len(d.labelNames)))
@@ -64,6 +68,10 @@ func (m *Counter) WriteMetricTo(mw *Writer) {
 			mw.WriteFloat(m.name, m.labelNames, labelValues, float64(value)/m.scale)
 		}
 	})
+}
+
+func (m *Counter) Enum(f func(labelValues []string, value uint64)) {
+	m.values.enum(f)
 }
 
 func (m *Counter) Inc(labelValues ...string) {
