@@ -267,15 +267,20 @@ func (list *List[T]) Process(data *FormData) {
 		list.Sort(list.items)
 	}
 	list.Binding.Set(list.items)
-	walk(list.children, ChildFlagSkipProcessing, func(c Child) {
-		if p, ok := c.(PreProcessor); ok {
-			p.PreProcess(data)
+	for i, child := range list.children {
+		if list.childFlags[i]&ChildFlagSkipProcessing != 0 {
+			continue
 		}
-	}, func(c Child) {
-		if p, ok := c.(Processor); ok {
-			p.Process(data)
-		}
-	})
+		walk(child, ChildFlagSkipProcessing, func(c Child) {
+			if p, ok := c.(PreProcessor); ok {
+				p.PreProcess(data)
+			}
+		}, func(c Child) {
+			if p, ok := c.(Processor); ok {
+				p.Process(data)
+			}
+		})
+	}
 }
 
 func (list *List[T]) RenderInto(buf *strings.Builder, r *Renderer) {
