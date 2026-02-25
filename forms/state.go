@@ -214,6 +214,12 @@ func (st *State) finalizeTree(c Child, flags ChildFlags) {
 	errSitesLen := len(st.errSites)
 	templLen := len(st.templKeys)
 	classesLen := len(st.classes)
+
+	savedData := st.Data
+	if flags&ChildFlagSkipProcessing != 0 {
+		st.Data = nil
+	}
+
 	st.classesCopied = append(st.classesCopied, false)
 	c.Finalize(st)
 	if p, ok := c.(Processor); ok {
@@ -231,6 +237,8 @@ func (st *State) finalizeTree(c Child, flags ChildFlags) {
 	if cont, ok := c.(Container); ok {
 		cont.EnumChildren(st.finalizeTree)
 	}
+
+	st.Data = savedData
 	st.path = st.path[:pathLen]
 	st.errSites = st.errSites[:errSitesLen]
 	st.templKeys = st.templKeys[:templLen]
