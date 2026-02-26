@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/ecdsa"
 	"crypto/sha256"
 )
 
@@ -78,4 +79,47 @@ func (s *RS256Signer) KeyID() string {
 func (s *RS256Signer) Sign(data []byte) ([]byte, error) {
 	h := sha256.Sum256(data)
 	return rsa.SignPKCS1v15(rand.Reader, s.privKey, crypto.SHA256, h[:])
+}
+
+// ----------------------------------------------------------------------------
+// ES256 Signer
+// ----------------------------------------------------------------------------
+
+type ES256Signer struct {
+	privKey *ecdsa.PrivateKey
+	keyID   string
+}
+
+func NewES256Signer(privKey *ecdsa.PrivateKey, keyID string) *ES256Signer {
+	if privKey == nil {
+		panic("ES256Signer: private key is nil")
+	}
+	return &ES256Signer{privKey: privKey, keyID: keyID}
+}
+
+func (s *ES256Signer) Algorithm() Algorithm {
+	return ES256
+}
+
+func (s *ES256Signer) KeyID() string {
+	return s.keyID
+}
+
+func (s *ES256Signer) Sign(data []byte) ([]byte, error) {
+	h := sha256.Sum256(data)
+	r, ss, err := ecdsa.Sign(rand.Reader, s.privKey, h[:])
+	if err != nil {
+		return nil, err
+	}
+
+	curveBits := s.privKey.Curve.Params().BitSize
+	keyBytes := (curveBits + 7) / 8
+
+	sig := make([]byte, 2*keyBytes)
+	rBytes := r.Bytes()
+	sBytes := ss.Bytes()
+	copy(sig[keyBytes-len(rBytes):keyBytes], rBytes)
+	copy(sig[2*keyBytes-len(sBytes):], sBytes)
+
+	return sig, nil
 }

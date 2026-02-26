@@ -4,7 +4,9 @@ import (
 	"crypto"
 	"crypto/hmac"
 	"crypto/rsa"
+	"crypto/ecdsa"
 	"crypto/sha256"
+	"math/big"
 	"crypto/sha512"
 	"crypto/subtle"
 )
@@ -138,6 +140,48 @@ func (v *HS512Verifier) Verify(data, signature []byte) error {
 
 	// Compare the provided signature to what we expect
 	if subtle.ConstantTimeCompare(signature, expected) != 1 {
+		return ErrSignature
+	}
+	return nil
+}
+
+// ----------------------------------------------------------------------------
+// ES256 Verifier
+// ----------------------------------------------------------------------------
+
+type ES256Verifier struct {
+	pubKey *ecdsa.PublicKey
+	keyID  string
+}
+
+func NewES256Verifier(pubKey *ecdsa.PublicKey, keyID string) *ES256Verifier {
+	if pubKey == nil {
+		panic("ES256Verifier: public key is nil")
+	}
+	return &ES256Verifier{pubKey: pubKey, keyID: keyID}
+}
+
+func (v *ES256Verifier) Algorithm() Algorithm {
+	return ES256
+}
+
+func (v *ES256Verifier) KeyID() string {
+	return v.keyID
+}
+
+func (v *ES256Verifier) SigLen() int {
+	return (v.pubKey.Curve.Params().BitSize + 7) / 8 * 2
+}
+
+func (v *ES256Verifier) Verify(data, signature []byte) error {
+	h := sha256.Sum256(data)
+	keyBytes := (v.pubKey.Curve.Params().BitSize + 7) / 8
+	if len(signature) != 2*keyBytes {
+		return ErrSignatureCorrupted
+	}
+	r := new(big.Int).SetBytes(signature[:keyBytes])
+	s := new(big.Int).SetBytes(signature[keyBytes:])
+	if !ecdsa.Verify(v.pubKey, h[:], r, s) {
 		return ErrSignature
 	}
 	return nil
