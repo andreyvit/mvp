@@ -12,7 +12,7 @@ func TestDynamicChild_resolves_child_with_typed_field_name(t *testing.T) {
 		Name:  "wrapper",
 		Child: &DynamicChild{
 			Name: "value",
-			Resolver: func() (string, Child) {
+			Resolver: func(state *State) (string, Child) {
 				return "Text", &InputText{
 					Binding: &Binding[string]{
 						Getter: func() string { return value },
@@ -44,7 +44,7 @@ func TestDynamicChild_empty_type_creates_no_child(t *testing.T) {
 		Name:  "wrapper",
 		Child: &DynamicChild{
 			Name: "value",
-			Resolver: func() (string, Child) {
+			Resolver: func(state *State) (string, Child) {
 				return "", nil
 			},
 		},

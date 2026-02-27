@@ -206,6 +206,14 @@ func (st *State) IsReadOnly() bool {
 	return st.readOnly
 }
 
+func (st *State) RawFormValue(name string) string {
+	if st.Data == nil {
+		return ""
+	}
+	fullName := JoinNames(append(st.path, name)...)
+	return st.Data.Values.Get(fullName)
+}
+
 func (st *State) finalizeTree(c Child, flags ChildFlags) {
 	if c == nil {
 		return

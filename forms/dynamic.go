@@ -6,7 +6,7 @@ package forms
 type DynamicChild struct {
 	RenderableImpl[DynamicChild]
 	Name     string
-	Resolver func() (typeName string, child Child)
+	Resolver func(state *State) (typeName string, child Child)
 	child    Child
 }
 
@@ -14,7 +14,7 @@ func (dc *DynamicChild) Finalize(state *State) {
 	if dc.Resolver == nil {
 		return
 	}
-	typeName, child := dc.Resolver()
+	typeName, child := dc.Resolver(state)
 	if typeName == "" || child == nil {
 		return
 	}
