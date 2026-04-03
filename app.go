@@ -134,9 +134,6 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 	initViews(app, &opt)
 
 	app.postmrk = &postmark.Caller{
-		HTTPClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
 		Credentials: app.Settings.Postmark,
 	}
 
