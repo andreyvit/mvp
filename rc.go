@@ -72,7 +72,8 @@ type RC struct {
 	Route      *Route
 	Request    bunrouter.Request
 	RespWriter http.ResponseWriter
-	Flash      *Flash
+	Flash        *Flash
+	OuterMessage *OuterMessage
 
 	SetCookies []*http.Cookie
 

@@ -15,15 +15,16 @@ import (
 )
 
 type Redirect struct {
-	Path       string
-	StatusCode int
-	Values     url.Values
-	RouteName  string
-	Flash      *Flash
+	Path         string
+	StatusCode   int
+	Values       url.Values
+	RouteName    string
+	Flash        *Flash
+	OuterMessage *OuterMessage
 }
 
 func (redir *Redirect) EffectivePath() string {
-	if redir.Flash == nil && len(redir.Values) == 0 {
+	if redir.Flash == nil && redir.OuterMessage == nil && len(redir.Values) == 0 {
 		return redir.Path
 	}
 
@@ -36,6 +37,9 @@ func (redir *Redirect) EffectivePath() string {
 	mvputil.CopyURLValues(q, redir.Values)
 	if redir.Flash != nil {
 		encodeFlash(q, redir.Flash)
+	}
+	if redir.OuterMessage != nil {
+		encodeOuterMessage(q, redir.OuterMessage)
 	}
 	u.RawQuery = q.Encode()
 
@@ -84,6 +88,11 @@ func (redir *Redirect) WithValues(values url.Values) *Redirect {
 
 func (redir *Redirect) WithFlash(flash *Flash) *Redirect {
 	redir.Flash = flash
+	return redir
+}
+
+func (redir *Redirect) WithOuterMessage(eventName string, data map[string]any) *Redirect {
+	redir.OuterMessage = &OuterMessage{Event: eventName, Data: data}
 	return redir
 }
 
@@ -187,5 +196,8 @@ func (app *App) fillViewData(output *ViewData, rc *RC) {
 	output.Route = rc.Route
 	if output.Flash == nil {
 		output.Flash = rc.Flash
+	}
+	if output.OuterMessage == nil {
+		output.OuterMessage = rc.OuterMessage
 	}
 }

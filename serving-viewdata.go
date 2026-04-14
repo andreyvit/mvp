@@ -18,6 +18,7 @@ type ViewData struct {
 	SemanticPath string
 	StatusCode   int
 	Flash        *Flash
+	OuterMessage *OuterMessage
 
 	ContentType string
 

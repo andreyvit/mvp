@@ -193,8 +193,15 @@ func DecodeFlashFromQuery(query url.Values) (*Flash, error) {
 }
 
 func DecodeFlashIntoRC(rc *RC) {
+	q := rc.Request.URL.Query()
+
 	var err error
-	rc.Flash, err = DecodeFlashFromQuery(rc.Request.URL.Query())
+	rc.Flash, err = DecodeFlashFromQuery(q)
+	if err != nil {
+		rc.Logf("ERROR: %v", err)
+	}
+
+	rc.OuterMessage, err = DecodeOuterMessageFromQuery(q)
 	if err != nil {
 		rc.Logf("ERROR: %v", err)
 	}
