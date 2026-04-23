@@ -13,10 +13,12 @@ type InputTime struct {
 	TagOpts
 	*Binding[time.Time]
 	InputWellOpts
-	IncludeTime bool
-	Min         time.Time
-	Max         time.Time
-	Location    *time.Location
+	IncludeTime    bool
+	Min            time.Time
+	Max            time.Time
+	Location       *time.Location
+	Required       bool
+	RequiredErrMsg string
 }
 
 const (
@@ -64,6 +66,12 @@ func (c *InputTime) Finalize(state *State) {
 func (c *InputTime) Process(*FormData) {
 	c.Binding.SetString(c.RawFormValue, func(s string) (time.Time, error) {
 		if s == "" {
+			if c.Required {
+				if c.RequiredErrMsg != "" {
+					return time.Time{}, fmt.Errorf("%s", c.RequiredErrMsg)
+				}
+				return time.Time{}, ErrRequired
+			}
 			return time.Time{}, nil
 		}
 		return time.ParseInLocation(c.ValueFormat(), s, c.Location)
@@ -71,5 +79,12 @@ func (c *InputTime) Process(*FormData) {
 }
 
 func (c *InputTime) FormattedValue() string {
-	return c.Binding.Value().In(c.Location).Format(c.ValueFormat())
+	if c.RawFormValuePresent {
+		return c.RawFormValue
+	}
+	value := c.Binding.Value()
+	if value.IsZero() {
+		return ""
+	}
+	return value.In(c.Location).Format(c.ValueFormat())
 }
