@@ -41,6 +41,10 @@ func (router *DomainRouter) ValidDomains() []string {
 	return result
 }
 
+func (router *DomainRouter) Lookup(domain string) any {
+	return router.find(domain)
+}
+
 func (router *DomainRouter) Handler(domain string, h http.Handler) {
 	router.set(domain, h)
 }
