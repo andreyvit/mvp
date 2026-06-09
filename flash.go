@@ -60,6 +60,11 @@ type Msg struct {
 	Mood     Mood   `json:"m,omitempty"`
 }
 
+type FlashCommand struct {
+	Name   string            `json:"n,omitempty"`
+	Params map[string]string `json:"p,omitempty"`
+}
+
 func (msg *Msg) Success() bool {
 	return msg.Mood == MoodSuccess
 }
@@ -114,11 +119,12 @@ func RawNeutralMsg(text string) *Msg {
 }
 
 type Flash struct {
-	Msg          *Msg           `json:"m,omitempty"`
-	Action       string         `json:"a,omitempty"`
-	Target       string         `json:"t,omitempty"`
-	ScrollTarget string         `json:"s,omitempty"`
-	Extras       map[string]any `json:"e,omitempty"`
+	Msg          *Msg            `json:"m,omitempty"`
+	Action       string          `json:"a,omitempty"`
+	Target       string          `json:"t,omitempty"`
+	ScrollTarget string          `json:"s,omitempty"`
+	Extras       map[string]any  `json:"e,omitempty"`
+	Commands     []*FlashCommand `json:"c,omitempty"`
 }
 
 func NewFlash() *Flash {
@@ -144,6 +150,11 @@ func (flash *Flash) WithExtra(key string, value any) *Flash {
 		flash.Extras = make(map[string]any)
 	}
 	flash.Extras[key] = value
+	return flash
+}
+
+func (flash *Flash) WithCmd(name string, params map[string]string) *Flash {
+	flash.Commands = append(flash.Commands, &FlashCommand{Name: name, Params: params})
 	return flash
 }
 
