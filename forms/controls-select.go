@@ -161,6 +161,7 @@ type RawMultiSelect[T comparable] struct {
 	Stringify          func(T) string
 	MissingItemLabel   func(T) string
 	Parse              func(s string) (T, error)
+	GuardIdentity      Identity
 }
 
 func (RawMultiSelect[T]) IsMultiSelect() bool     { return true }
@@ -179,6 +180,10 @@ func (c *RawMultiSelect[T]) doStringify(item T) string {
 }
 
 func (c *RawMultiSelect[T]) Finalize(state *State) {
+	state.PushName("present")
+	state.AssignIdentity(&c.GuardIdentity)
+	state.PopName()
+
 	optionsByHTMLValue := make(map[string]struct{}, len(c.Options))
 	for _, opt := range c.Options {
 		optionsByHTMLValue[opt.HTMLValue] = struct{}{}
@@ -203,7 +208,11 @@ func (c *RawMultiSelect[T]) Finalize(state *State) {
 	}
 }
 
-func (c *RawMultiSelect[T]) Process(*FormData) {
+func (c *RawMultiSelect[T]) Process(data *FormData) {
+	if len(data.Values[c.GuardIdentity.FullName]) > 0 && !c.RawFormValuePresent {
+		c.RawFormValues = []string{}
+	}
+
 	var items []T
 	for _, s := range c.RawFormValues {
 		item, err := c.Parse(s)
