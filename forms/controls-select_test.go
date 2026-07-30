@@ -6,6 +6,27 @@ import (
 	"testing"
 )
 
+func TestSelect_Finalize_loads_dynamic_options_before_selecting_value(t *testing.T) {
+	stored := "never"
+	control := &Select[string]{
+		Binding: Var(&stored),
+		OptionsFunc: func() []*Option[string] {
+			return []*Option[string]{
+				{ModelValue: "unconfigured", HTMLValue: "unconfigured", Label: "Default"},
+				{ModelValue: "never", HTMLValue: "never", Label: "Never"},
+			}
+		},
+	}
+	form := &Form{}
+	form.AddChild(&Item{Name: "expiration", Child: control})
+
+	form.FinalizeForm(nil)
+
+	if !control.IsHTMLValueSelected("never") {
+		t.Fatalf("expected stored value to select dynamic option, got raw value %q", control.RawFormValue)
+	}
+}
+
 func TestRawMultiSelect_Process(t *testing.T) {
 	tests := []struct {
 		name     string

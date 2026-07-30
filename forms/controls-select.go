@@ -33,6 +33,7 @@ func (c *Select[T]) IsHTMLValueSelected(htmlValue string) bool {
 }
 
 func (c *Select[T]) Finalize(state *State) {
+	c.refreshOptions()
 	if c.RawFormValue == "" {
 		opt := c.OptionByModelValue(c.Binding.Value())
 		if opt != nil {
@@ -42,9 +43,7 @@ func (c *Select[T]) Finalize(state *State) {
 }
 
 func (c *Select[T]) Process(*FormData) {
-	if c.OptionsFunc != nil {
-		c.Options = c.OptionsFunc()
-	}
+	c.refreshOptions()
 	opt := c.OptionByHTMLValue(c.RawFormValue)
 	if opt != nil {
 		c.Binding.Set(opt.ModelValue)
@@ -70,10 +69,14 @@ func (c *Select[T]) OptionByHTMLValue(value string) *Option[T] {
 }
 
 func (c *Select[T]) BeforeRender() {
+	c.refreshOptions()
+	c.RenderableImpl.BeforeRender()
+}
+
+func (c *Select[T]) refreshOptions() {
 	if c.OptionsFunc != nil {
 		c.Options = c.OptionsFunc()
 	}
-	c.RenderableImpl.BeforeRender()
 }
 
 type RawSelect[T comparable] struct {
