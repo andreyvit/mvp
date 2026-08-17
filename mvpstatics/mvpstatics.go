@@ -9,8 +9,29 @@ import (
 	"github.com/uptrace/bunrouter"
 )
 
+type filesOnlyFS struct {
+	fs.FS
+}
+
+func (f filesOnlyFS) Open(name string) (fs.File, error) {
+	file, err := f.FS.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	info, err := file.Stat()
+	if err != nil {
+		file.Close()
+		return nil, err
+	}
+	if info.IsDir() {
+		file.Close()
+		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
+	}
+	return file, nil
+}
+
 func SetupRoute(g *bunrouter.Group, urlPrefix string, f fs.FS, cm mvphttp.CacheMode, cors *cors.CORS) {
-	h := http.FileServer(http.FS(f))
+	h := http.FileServer(http.FS(filesOnlyFS{f}))
 	// h = http.StripPrefix(urlPrefix, h)
 	if cors != nil {
 		h = cors.Wrap(h)
