@@ -67,6 +67,10 @@ type (
 		Error           *Error
 		Duration        time.Duration
 
+		// ForceNonIdempotent classifies reads with external effects, such as billing,
+		// as non-idempotent for caller policies. It does not change HTTP methods or retries.
+		ForceNonIdempotent bool
+
 		DoNotLogRequestBody bool
 
 		initDone bool
@@ -92,7 +96,7 @@ func (r *Request) Clone() *Request {
 
 func (r *Request) IsIdempotent() bool {
 	r.Init()
-	return r.HTTPRequest.Method == http.MethodGet || r.HTTPRequest.Method == http.MethodHead
+	return !r.ForceNonIdempotent && (r.HTTPRequest.Method == http.MethodGet || r.HTTPRequest.Method == http.MethodHead)
 }
 
 func (r *Request) StatusCode() int {
