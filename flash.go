@@ -54,10 +54,11 @@ func (v *Mood) DecodeMsgpack(dec *msgpack.Decoder) error {
 }
 
 type Msg struct {
-	Text     string `json:"t,omitempty"`
-	Link     string `json:"l,omitempty"`
-	LinkText string `json:"lt,omitempty"`
-	Mood     Mood   `json:"m,omitempty"`
+	Text      string `json:"t,omitempty"`
+	Link      string `json:"l,omitempty"`
+	LinkText  string `json:"lt,omitempty"`
+	Mood      Mood   `json:"m,omitempty"`
+	Signature string `json:"s,omitempty"`
 }
 
 type FlashCommand struct {
@@ -85,7 +86,9 @@ func DecodeMsg(raw string) *Msg {
 		return nil
 	}
 	msg := new(Msg)
-	_ = json.Unmarshal([]byte(raw), msg)
+	if err := json.Unmarshal([]byte(raw), msg); err != nil {
+		return nil
+	}
 	if *msg == (Msg{}) {
 		return nil
 	}
