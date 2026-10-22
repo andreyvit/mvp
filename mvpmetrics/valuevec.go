@@ -13,11 +13,17 @@ type vector[T any] struct {
 	labelIndices map[string]int
 }
 
-func (vec *vector[T]) enum(f func(labels []string, value T)) {
+func (vec *vector[T]) enum(load func(*T) T, f func(labels []string, value T)) {
 	vec.lock.RLock()
-	defer vec.lock.RUnlock()
-	for i, value := range vec.values {
-		f(vec.labels[i], value)
+	values := make([]T, len(vec.values))
+	for i := range values {
+		values[i] = load(&vec.values[i])
+	}
+	labels := vec.labels
+	vec.lock.RUnlock()
+
+	for i, value := range values {
+		f(labels[i], value)
 	}
 }
 

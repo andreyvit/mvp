@@ -61,7 +61,7 @@ func NewCounter(name string, labelNames []string, opts ...any) *Counter {
 }
 
 func (m *Counter) WriteMetricTo(mw *Writer) {
-	m.values.enum(func(labelValues []string, value uint64) {
+	m.values.enum(atomic.LoadUint64, func(labelValues []string, value uint64) {
 		if m.scale == 0 {
 			mw.WriteUint(m.name, m.labelNames, labelValues, value)
 		} else {
@@ -71,7 +71,7 @@ func (m *Counter) WriteMetricTo(mw *Writer) {
 }
 
 func (m *Counter) Enum(f func(labelValues []string, value uint64)) {
-	m.values.enum(f)
+	m.values.enum(atomic.LoadUint64, f)
 }
 
 func (m *Counter) Inc(labelValues ...string) {
@@ -123,7 +123,7 @@ func NewGauge(name string, labelNames []string, opts ...any) *Gauge {
 }
 
 func (m *Gauge) WriteMetricTo(mw *Writer) {
-	m.values.enum(func(labelValues []string, value int64) {
+	m.values.enum(atomic.LoadInt64, func(labelValues []string, value int64) {
 		if m.scale == 0 {
 			mw.WriteInt(m.name, m.labelNames, labelValues, value)
 		} else {
