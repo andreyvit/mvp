@@ -25,6 +25,11 @@ func (d *desc) LabelNames() []string {
 	return d.labelNames
 }
 
+// Scale returns the divisor that turns a stored integer value into the unit of the metric's name, or 0 when values are written as they are.
+func (d *desc) Scale() float64 {
+	return d.scale
+}
+
 func (d *desc) verifyCorrectLabels(labelValues []string) {
 	if len(labelValues) != len(d.labelNames) {
 		panic(fmt.Errorf("invalid number of label values, got %d, wanted %d", len(labelValues), len(d.labelNames)))
@@ -130,6 +135,11 @@ func (m *Gauge) WriteMetricTo(mw *Writer) {
 			mw.WriteFloat(m.name, m.labelNames, labelValues, float64(value)/m.scale)
 		}
 	})
+}
+
+// Enum calls f with the current value of every label combination. Values are in stored units; divide by Scale for the unit of the metric's name.
+func (m *Gauge) Enum(f func(labelValues []string, value int64)) {
+	m.values.enum(atomic.LoadInt64, f)
 }
 
 func (m *Gauge) Set(value int64, labelValues ...string) {

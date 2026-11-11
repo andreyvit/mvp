@@ -75,3 +75,23 @@ func TestEnumConcurrentWithUpdates(t *testing.T) {
 		t.Fatalf("counter sum = %d, want %d", sum, want)
 	}
 }
+
+func TestGaugeEnumReturnsStoredValuesAndScale(t *testing.T) {
+	reg := &Registry{}
+	age := NewGauge("test_age_seconds", []string{"kind"}, Scale(1000), reg)
+	age.Set(1500, "a")
+	age.Set(-20, "b")
+	got := map[string]int64{}
+	age.Enum(func(labelValues []string, value int64) {
+		got[labelValues[0]] = value
+	})
+	if len(got) != 2 || got["a"] != 1500 || got["b"] != -20 {
+		t.Fatalf("got %v", got)
+	}
+	if age.Scale() != 1000 {
+		t.Fatalf("Scale() = %v, wanted 1000", age.Scale())
+	}
+	if n := NewCounter("test_plain_total", nil, reg); n.Scale() != 0 {
+		t.Fatalf("Scale() = %v, wanted 0", n.Scale())
+	}
+}
