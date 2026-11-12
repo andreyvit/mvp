@@ -59,7 +59,7 @@ type App struct {
 
 	db                  *edb.DB
 	gen                 *flake.Gen
-	dbMonitoringOptions map[*edb.Table]edb.ChangeFlags
+	dbMonitoringOptions map[*edb.TableDef]edb.ChangeFlags
 
 	methodsByName     map[string]*MethodImpl
 	jobsByKind        map[*mvpjobs.Kind]*JobImpl
@@ -172,10 +172,10 @@ func (app *App) Close() {
 	closeAppDB(app)
 }
 
-func (init *AppInit) MonitorDBChanges(tbl *edb.Table, flags edb.ChangeFlags) {
+func (init *AppInit) MonitorDBChanges(tbl *edb.TableDef, flags edb.ChangeFlags) {
 	app := init.app
 	if app.dbMonitoringOptions == nil {
-		app.dbMonitoringOptions = make(map[*edb.Table]edb.ChangeFlags)
+		app.dbMonitoringOptions = make(map[*edb.TableDef]edb.ChangeFlags)
 	}
 	app.dbMonitoringOptions[tbl] |= flags | edb.ChangeFlagNotify
 }

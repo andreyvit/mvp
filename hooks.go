@@ -13,7 +13,7 @@ type Hooks struct {
 	closeRC      []func(app *App, rc *RC)
 	initDB       []func(app *App, rc *RC)
 	migrate      []func(app *App, b *MigrationBuilder)
-	makeRowKey   []func(app *App, tbl *edb.Table) any
+	makeRowKey   []func(app *App, tbl *edb.TableDef) any
 	resetAuth    []func(app *App, rc *RC)
 	postAuth     []func(app *App, rc *RC) error
 	helpers      []func(m template.FuncMap)
@@ -51,7 +51,7 @@ func (h *Hooks) Migrate(f func(app *App, b *MigrationBuilder)) {
 	h.migrate = append(h.migrate, f)
 }
 
-func (h *Hooks) MakeRowKey(f func(app *App, tbl *edb.Table) any) {
+func (h *Hooks) MakeRowKey(f func(app *App, tbl *edb.TableDef) any) {
 	h.makeRowKey = append(h.makeRowKey, f)
 }
 
