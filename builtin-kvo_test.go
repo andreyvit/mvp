@@ -24,7 +24,7 @@ func TestJobRecordIndexing(t *testing.T) {
 	if !projection.DirectMessagePack() {
 		t.Fatal("job indexing requires a decoded row")
 	}
-	db.Write(func(tx *edb.Tx) {
+	db.Write(edb.TxMetadata{}, func(tx *edb.Tx) {
 		row := &mvpjobs.Job{ID: 1, Kind: "email", Name: "welcome", Status: mvpjobs.StatusQueued, NextRunTime: now, StartTime: now.Add(-time.Hour), RawParams: json.RawMessage(`{"keep":[1,2,3]}`), RawState: []byte("opaque")}
 		check := func() {
 			t.Helper()
@@ -96,7 +96,7 @@ func TestBuiltinTableModels(t *testing.T) {
 	}
 	defer db.Close()
 	now := time.Date(2026, time.November, 11, 12, 0, 0, 123456789, time.UTC)
-	db.Write(func(tx *edb.Tx) {
+	db.Write(edb.TxMetadata{}, func(tx *edb.Tx) {
 		row := &mvpm.MigrationRecord{ID: 1, Name: "upgrade", ExecutionTime: now, ExecutionDuration: 123 * time.Nanosecond}
 		edb.Put(tx, row)
 		r := tx.GetRecord(migrationsTable, row.ID)
