@@ -1,11 +1,9 @@
 module github.com/andreyvit/mvp
 
-go 1.23
-
-toolchain go1.23.0
+go 1.27.0
 
 require (
-	github.com/andreyvit/edb v0.2.5
+	github.com/andreyvit/edb v0.4.15-0.20261117112846-6032400d7057
 	github.com/andreyvit/httpform v0.1.8
 	github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5
 	github.com/andreyvit/jsondiff v1.1.0
@@ -22,5 +20,5 @@ require (
 require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 )

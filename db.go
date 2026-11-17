@@ -62,7 +62,7 @@ func (rc *RC) InTx(affinity mvpm.StoreAffinity, f func() error) error {
 		}
 	}
 	isWrite := affinity.IsWriter()
-	err := rc.app.db.Tx(isWrite, func(tx *edb.Tx) error {
+	err := rc.app.db.Tx(edb.TxMetadata{}, isWrite, func(tx *edb.Tx) error {
 		rc.tx = tx
 		tx.OnChange(rc.app.dbMonitoringOptions, rc.onDBChange)
 		defer func() {
