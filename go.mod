@@ -3,7 +3,7 @@ module github.com/andreyvit/mvp
 go 1.27.0
 
 require (
-	github.com/andreyvit/edb v0.4.15-0.20261117112846-6032400d7057
+	github.com/andreyvit/edb v0.4.16-0.20261117182911-ed5fc3f5a796
 	github.com/andreyvit/httpform v0.1.8
 	github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5
 	github.com/andreyvit/jsondiff v1.1.0

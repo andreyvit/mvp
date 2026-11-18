@@ -45,7 +45,7 @@ func (app *App) NewID() flake.ID {
 
 func (rc *RC) DBTx() *edb.Tx {
 	if rc.tx == nil {
-		rc.tx = rc.app.db.BeginRead()
+		rc.tx = rc.app.db.BeginRead(edb.TxMetadata{})
 	}
 	return rc.tx
 }
