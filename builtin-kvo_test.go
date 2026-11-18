@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/andreyvit/edb"
-	"github.com/andreyvit/edb/kvo"
+	"github.com/andreyvit/evm/kvo"
 	"github.com/andreyvit/mvp/mvpjobs"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )

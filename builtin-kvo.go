@@ -6,9 +6,9 @@ import (
 
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 
-	"github.com/andreyvit/edb/kvo"
-	"github.com/andreyvit/edb/kvo/codec/msgpack"
-	"github.com/andreyvit/edb/values"
+	"github.com/andreyvit/evm/kvo"
+	"github.com/andreyvit/evm/kvo/codec/msgpack"
+	"github.com/andreyvit/evm/values"
 	"github.com/andreyvit/mvp/mvpjobs"
 )
 

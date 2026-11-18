@@ -5,8 +5,8 @@ import (
 
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/edb/edbindexing"
-	"github.com/andreyvit/edb/kvo"
-	"github.com/andreyvit/edb/values"
+	"github.com/andreyvit/evm/kvo"
+	"github.com/andreyvit/evm/values"
 	"github.com/andreyvit/mvp/mvpjobs"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )
