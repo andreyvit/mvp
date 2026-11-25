@@ -1,3 +1,7 @@
+github.com/andreyvit/edb v0.4.20 h1:BIKGYHknGtsc+vWI8KXh2BS7/YCqtdCOSxm2nLhsa1s=
+github.com/andreyvit/edb v0.4.20/go.mod h1:rKlmQK1E629myrEy78JfR715J9XqdDvTMoAxWjcuXDQ=
+github.com/andreyvit/evm v0.1.0 h1:TblUv3cJuDBDT8ZVzTBUeK0j215Qqk9cSIWP6PCr8M0=
+github.com/andreyvit/evm v0.1.0/go.mod h1:QYyMyGpUFf7RqDFCcjFj0qnTqd2Obuje91Jfiqx3uAM=
 github.com/andreyvit/httpform v0.1.8 h1:1jUTIBAct5eEABl04HTlntx0k0I0dTO6IPIo/p80lmw=
 github.com/andreyvit/httpform v0.1.8/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5 h1:0ZOOtzyfCmLo7uC4L5T0RQz1KfnO1CgloBiyVzpYP7Y=
@@ -10,6 +14,8 @@ github.com/andreyvit/minicomponents v0.3.3 h1:fuPTGdYnBtfhdXadXoIxWnpMnkp0zVJYvX
 github.com/andreyvit/minicomponents v0.3.3/go.mod h1:JUl5yFUwD4u+o6L8osxSXC4CeFXuM9w9Y/TDppsH1/M=
 github.com/andreyvit/plainsecrets v0.1.2 h1:jq4QAaaokPJpBAEOejmYMK0x50tUlwQoqvXXo6DnCyQ=
 github.com/andreyvit/plainsecrets v0.1.2/go.mod h1:uLY+B1uoi0b29z9XkRiRsrf9ysrqP2gtFobB48P+4Jo=
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

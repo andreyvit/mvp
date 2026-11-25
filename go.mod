@@ -3,7 +3,7 @@ module github.com/andreyvit/mvp
 go 1.27.0
 
 require (
-	github.com/andreyvit/edb v0.4.16
+	github.com/andreyvit/edb v0.4.20
 	github.com/andreyvit/evm v0.1.0
 	github.com/andreyvit/httpform v0.1.8
 	github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5
@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	golang.org/x/sys v0.49.0 // indirect
