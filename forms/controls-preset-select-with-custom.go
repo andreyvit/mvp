@@ -55,6 +55,9 @@ func (c *PresetSelectWithCustom[T]) Finalize(*State) {
 }
 
 func (c *PresetSelectWithCustom[T]) Process(data *FormData) {
+	if !c.selectField.RawFormValuePresent {
+		return // control is absent from this POST; keep stored value, custom child included
+	}
 	if c.IsCustomSelected() {
 		if data.Action == "update" && !childHasSubmittedFields(c.Custom, data) {
 			return

@@ -192,10 +192,10 @@ func (form *Form) Process(data *FormData) bool {
 
 	form.FinalizeForm(data)
 	for name, field := range form.fields {
+		field.RawFormValuePresent = false // a reused form must not remember an earlier POST
 		if values, exists := data.Values[name]; exists {
 			field.RawFormValues = values
 			field.RawFormValue = ""
-			field.RawFormValuePresent = false
 			for _, v := range values {
 				field.RawFormValue = v
 				field.RawFormValuePresent = true
